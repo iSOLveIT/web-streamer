@@ -1,40 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for
-from flask_socketio import SocketIO, join_room, leave_room, emit
+from project import socket_io
+from flask import request
+from flask_socketio import join_room, leave_room, emit
 # from uuid import uuid4
 from random import sample
-from string import ascii_letters
-
-
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
-socket_io = SocketIO(app)
-
-room_store = {}
-
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-
-@app.route('/room/<string:stream_id>')
-def studio(stream_id):
-    broadcast_viewer = request.args.get('viewer')
-    if broadcast_viewer == "broadcast":
-        alphanum = ascii_letters + '0123456789'
-        room_id = ''.join(sample(alphanum, 7))
-        room_store.update([(stream_id, room_id)])
-        return render_template('studio.html', stream_id=stream_id, room_id=room_id)
-    elif broadcast_viewer == "stream":
-        room_id = room_store.get(stream_id)
-        return render_template('viewers.html', stream_id=stream_id, room_id=room_id)
-    return redirect(url_for("index"))
-
-
-# @app.route('/room/viewers/<string:stream_id>')
-# def view_room(stream_id):
-#     room_id = room_store.get(stream_id)
-#     return render_template('viewers.html', room_id=room_id)
 
 
 # SOCKET_IO CODE
@@ -134,7 +102,3 @@ def on_leave(data):
 @socket_io.on('disconnect', namespace='/room')
 def test_disconnect():
     print(f"Client {request.sid} disconnected!")
-
-
-if __name__ == '__main__':
-    socket_io.run(app, port=4000, debug=True)
