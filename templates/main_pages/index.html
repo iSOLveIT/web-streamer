@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <a href="/room/stream-test?viewer=broadcast">Goto stream</a>
+    <h3>Schedule Meeting</h3>
+    <form action="/" method="POST">
+        <input type="text" name="fullname" placeholder="Fullname" required>
+        <input type="text" name="mTopic" placeholder="Topic" required>
+        <h5>Start</h5>
+        <input type="date" name="mDate" id="meeting_date" required>
+        <input type="time" name="mTime" step="10800" required>
+        <h5>Duration</h5>
+        <select name="mHour" id="duration_hour">
+        <option value="1">1 hour</option>
+        <option value="2">2 hours</option>
+        <option value="3">3 hours</option>
+        </select>
+        <input type="number" name="mMinute" id="duration_min" min="0" max="60" placeholder="minutes">
+
+        <input type="submit" value="Schedule">
+    </form>
+
+<script>
+const meetingDate = document.getElementById('meeting_date');
+let today = new Date();
+let minDate = `${today.getFullYear()}-0${parseInt(today.getMonth())+1}-0${today.getDate()}`
+meetingDate.setAttribute("min", `${minDate}`);
+</script>
+</body>
+</html>

@@ -1,8 +1,9 @@
-from project import socket_io
-from flask import request
-from flask_socketio import join_room, leave_room, emit
-# from uuid import uuid4
 from random import sample
+
+from flask import request
+from flask_socketio import emit, join_room, leave_room
+
+from project import socket_io
 
 
 # SOCKET_IO CODE

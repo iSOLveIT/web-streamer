@@ -6,11 +6,8 @@ url = "http://localhost:5080/LiveApp/rest/v2/broadcasts/create"
 body = {
     "type": "liveStream",
     "name": "PYTHON BROADCAST 3",
-    "description": "Lets see",
     "publish": True,
     "date": 1609637904.857858,
-    "plannedStartDate": 1609637904.857858,
-    "plannedEndDate": 1609638024.857858,
     "quality": "1080p",
     "mp4Enabled": 1,
 }
