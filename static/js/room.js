@@ -1,4 +1,4 @@
-const socket = io('/room');
+const socket = io('/meeting');
 
 //const privateBtn = document.getElementById('p_msg_btn');
 const broadcastBtn = document.getElementById('msg_btn');
@@ -10,16 +10,15 @@ let divUserName = document.getElementById('user_name');
 
 
 socket.on('connect', () => {
-  socket.emit('store_user_credential', { client_id: socket.id });
-  socket.emit('store_room_user_credential', { room_id: ROOM_ID, client_id: socket.id });
-  socket.emit('join-room', { room_id: ROOM_ID, client_id: socket.id });
+  // socket.emit('store_user_credential', { client_id: socket.id });
+  // socket.emit('store_room_user_credential', { room_id: ROOM_ID, client_id: socket.id });
+  socket.emit('join-room', { room_id: ROOM_ID, user_id: USERNAME});
 
 });
 
 socket.on('username', data => {
-  localStorage.setItem(`${socket.id}`, data);
   let header = document.createElement("h1");
-  header.textContent = data;
+  header.textContent = USERNAME;
   divUserName.appendChild(header);
 });
 
@@ -31,7 +30,6 @@ socket.on('message', data => {
 
 // handle the json event sent with socket.send()
 socket.on('json', data => {
-  //  client_id = data.id;
   console.log(data.msg);
 });
 
@@ -58,13 +56,13 @@ broadcastBtn.addEventListener('click', function () {
 })
 
 function broadcast_msg(message) {
-  socket.emit('send_room_message', { room_id: ROOM_ID, msg: `${message}`, sender: `${localStorage.getItem(`${socket.id}`)}` });
+  socket.emit('send_room_message', { room_id: ROOM_ID, msg: `${message}`, sender: USERNAME });
 }
 
 
 // Leave Room
 function leave_room() {
-  socket.emit('leave-room', { room_id: ROOM_ID, client_id: socket.id });
+  socket.emit('leave-room', { room_id: ROOM_ID, user_id: USERNAME });
 }
 
 function host_msg(message) {

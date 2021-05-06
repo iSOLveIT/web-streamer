@@ -2,9 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Host Verify</title>
 </head>
 <body>
-
+    <form action="" method="post">
+        <label for="otp_id">OTP</label> <br>
+        <input type="text" name="meeting_passcode" id="otp_id" pattern="^[a-zA-Z0-9]{3}$" placeholder="Enter meeting otp">
+        <input type="submit" value="Submit">
+    </form>
 </body>
 </html>
