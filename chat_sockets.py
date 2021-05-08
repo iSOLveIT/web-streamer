@@ -7,51 +7,11 @@ from project import socket_io
 from project import mongo
 
 
-# SOCKET_IO CODE
-# clients = {}
-# rooms_clients = {}
-
-
+# Client Connected
 @socket_io.on('connect', namespace='/meeting')
 def test_connect():
     emit('server_response', {'result': 'Connected!'},
          to=request.sid, namespace='/meeting')
-
-
-# # Storing Credentials for a client
-# @socket_io.on('store_user_credential', namespace='/room')
-# def handle_credentials(data):
-#     user_id = data['client_id']
-#     if user_id not in clients.values():
-#         num = sample(range(1, 2000), 1)
-#         clients.update([(f'user_{num[0]}', user_id)])
-#
-#     username = [i for i, j in clients.items() if request.sid == j][0]
-#     emit('username', username, to=request.sid, namespace='/room')
-#     emit('server_response', {'result': 'Credentials stored!'},
-#          to=request.sid, namespace='/room')
-#
-#
-# # Storing Credentials for a room and its client
-# @socket_io.on('store_room_user_credential', namespace='/room')
-# def handle_room_credentials(data):
-#     room_id = data['room_id']
-#     user_socket_id = data['client_id']
-#     get_client_name = [i for i, j in clients.items() if user_socket_id == j]
-#     username = get_client_name[0]
-#
-#     if room_id not in rooms_clients.keys():
-#         body = (room_id, [
-#             {'user_socketID': user_socket_id, 'username': username}
-#         ])
-#         rooms_clients.update([body])
-#     else:
-#         get_room = rooms_clients.get(room_id)
-#         body = {'user_socketID': user_socket_id, 'username': username}
-#         get_room.append(body)
-#
-#     emit('server_response', {'result': f'User credentials stored for room_{room_id}!'},
-#          to=request.sid, namespace='/room')
 
 
 # Room Broadcasting message to all room clients excluding the sender
@@ -65,30 +25,59 @@ def handle_room_broadcast_message(message):
 
 
 # JOINING AND LEAVING ROOM
+# Join Room
 @socket_io.on('join-room', namespace='/meeting')
 def on_join(data):
     room_id = data['room_id']
     username = data['user_id']
     join_room(room_id)
-    message = f"{username} has joined the room."
+
+    joined_at = dt.now().isoformat()
+    # Add user to students records in DB
+    meeting_collection = mongo.get_collection("meetings")
+    meeting_data = meeting_collection.find_one({"meeting_id": room_id}, {"attendance_records": 1})
+    attendance_records: dict = meeting_data['attendance_records']
+
+    message = f"{username} has rejoined the room."
+
+    if username not in attendance_records.keys():
+        attendance_records.update([(request.sid, [username, joined_at, ""])])
+        meeting_collection.find_one_and_update({"meeting_id": room_id},
+                                               {"$set": {"attendance_records": attendance_records}})
+        message = f"{username} has joined the room."
+    # TODO: Add participant count as they join
     emit('message', message, to=room_id, include_self=False, namespace='/meeting')
 
 
+# Leave room
 @socket_io.on('leave-room', namespace='/meeting')
 def on_leave(data):
     room_id = data['room_id']
     username = data['user_id']
     leave_room(room_id)
 
-    meeting_collection = mongo.get_collection("meetings")
     left_at = dt.now().isoformat()
+    meeting_collection = mongo.get_collection("meetings")
     meeting_collection.find_one_and_update({"meeting_id": room_id},
-                                           {"$set": {f"student_records.{username}.1": left_at}})
+                                           {"$set": {f"attendance_records.{request.sid}.2": left_at}})
     message = f"{username} has left the room."
+    # TODO: Remove participant count as they leave
     emit('message', message, to=room_id, include_self=False, namespace='/meeting')
 
 
-# CLIENT DISCONNECTED
+# Client Disconnected
 @socket_io.on('disconnect', namespace='/meeting')
 def test_disconnect():
-    print(f"Client {request.sid} disconnected!")
+    # User leaving by closing browser tab or refreshing.
+    left_at = dt.now().isoformat()
+    meeting_collection = mongo.get_collection("meetings")
+    meeting_data = meeting_collection.find_one_and_update({f"attendance_records.{request.sid}": {"$exists": 1}},
+                                                          {"$set": {f"attendance_records.{request.sid}.2": left_at}},
+                                                          {"meeting_id": 1, f"attendance_records.{request.sid}": 1}
+                                                          )
+    room_id = meeting_data["meeting_id"]
+    username = meeting_data["attendance_records"][f"{request.sid}"][0]
+    message = f"{username} has left the room."
+    emit('message', message, to=room_id, include_self=False, namespace='/meeting')
+    # User leaving by closing browser tab. Write that js prompt to ask users if they want to leave a site
+    # In this case if a user clicks on the Leave site button we trigger the leave room handle

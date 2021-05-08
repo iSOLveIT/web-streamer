@@ -1,6 +1,11 @@
-flask
+flask~=1.1.2
 flask-socketio
 eventlet
 gevent
 gevent-websocket
 gunicorn
+flask-weasyprint
+pymongo~=3.11.4
+dnspython
+requests~=2.25.1
+passlib~=1.7.4

@@ -16,11 +16,11 @@ socket.on('connect', () => {
 
 });
 
-socket.on('username', data => {
-  let header = document.createElement("h1");
-  header.textContent = USERNAME;
-  divUserName.appendChild(header);
-});
+// socket.on('username', data => {
+//   let header = document.createElement("h1");
+//   header.textContent = USERNAME;
+//   divUserName.appendChild(header);
+// });
 
 // handle the message event sent with socket.send()
 socket.on('message', data => {
@@ -29,9 +29,9 @@ socket.on('message', data => {
 });
 
 // handle the json event sent with socket.send()
-socket.on('json', data => {
-  console.log(data.msg);
-});
+// socket.on('json', data => {
+//   console.log(data.msg);
+// });
 
 socket.on('server_response', data => {
   console.log(data.result);
@@ -63,7 +63,22 @@ function broadcast_msg(message) {
 // Leave Room
 function leave_room() {
   socket.emit('leave-room', { room_id: ROOM_ID, user_id: USERNAME });
+  // window.location.replace("new target URL");
 }
+
+// window.addEventListener('beforeunload', () => {
+//   var formData = new FormData();
+//   formData.append('room_id', ROOM_ID);
+//   formData.append('user_id', USERNAME);
+
+//   var url = '/'
+//   navigator.sendBeacon(url, formData);
+
+//   if (!navigator.sendBeacon) {
+//   navigator.sendBeacon = (url, formData) =>
+//     window.fetch(url, {method: 'POST', body: formData});
+//   }
+// });
 
 function host_msg(message) {
   if (/[\w+\s\,\'\"\:\;\>\<\?\\/\$\@\#\%\^\&\*\(\)\-\+\=\|\}\{\]\[\.\~\`]{30,}?/.test(message)) {
@@ -90,9 +105,3 @@ function notification(message) {
   return " <p class=\"text-center\"> " +
     `<strong class="text-success font-weight-bold">${message}</strong>` + " </p> "
 }
-
-// socket.on('disconnect', (reason) => {
-//   socket.emit('leave-room', {room_id: ROOM_ID, client_id: socket.id});
-//   localStorage.removeItem(`${socket.id}`);
-//   console.log("Disconnected!!");
-// });

@@ -1,7 +1,7 @@
 from random import sample
 from string import ascii_letters
 from datetime import datetime as dt
-import requests
+import timeit
 
 
 # Combines date and time
@@ -18,7 +18,7 @@ def date_and_time(*, _date, _time, _fmt):
     """
     # convert _time from 12 hour to 24 hour based on value for format
     hour_hand, minute_hand = _time.split(":")
-    converted_time = f"{'0'+hour_hand if int(hour_hand) < 10 else hour_hand}:{minute_hand}"
+    converted_time = f"{'0' + hour_hand if int(hour_hand) < 10 else hour_hand}:{minute_hand}"
     if int(hour_hand) == 12 and _fmt == "am":
         converted_time = f"00:{minute_hand}"
     if (n_hour := int(hour_hand)) < 12 and _fmt == "pm":
@@ -44,21 +44,8 @@ def random_str_generator(str_length):
     output = ''.join(sample(alphanum, str_length))
     return output
 
-
-# Create broadcast on Ant Media Server
-def create_broadcast(*, meeting_name, meeting_datetime):
-    url = "http://localhost:5080/LiveApp/rest/v2/broadcasts/create"
-    iso_date = meeting_datetime.date().isoformat()
-    body = {
-        "type": "liveStream",
-        "name": meeting_name,
-        "publish": True,
-        "date": dt.fromisoformat(iso_date).timestamp(),
-        "quality": "720p",
-        "mp4Enabled": 1,
-    }
-    response = requests.post(url, json=body)
-    data = response.json()
-    return data["streamId"]
-
-# TODO: Stop broadcast
+# if __name__ == '__main__':
+#     import timeit
+#     # s = f"create_broadcast(meeting_name={random_str_generator(3)})"
+#     print(timeit.timeit(stmt="create_broadcast()", setup="from __main__ import create_broadcast",
+#                         number=100))
