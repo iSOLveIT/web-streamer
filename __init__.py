@@ -13,4 +13,4 @@ socket_io = SocketIO(app)
 client = MongoClient()
 mongo = client.get_database(name="vCLASS")
 
-from project import chat_sockets, routes
+from project import routes, chat_sockets

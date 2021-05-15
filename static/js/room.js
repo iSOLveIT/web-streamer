@@ -1,6 +1,7 @@
 const socket = io('/meeting');
 
-//const privateBtn = document.getElementById('p_msg_btn');
+const studentleaveBtn = document.getElementById('student_exit_btn');
+const hostleaveBtn = document.getElementById('host_exit_btn');
 const broadcastBtn = document.getElementById('msg_btn');
 
 
@@ -55,6 +56,22 @@ broadcastBtn.addEventListener('click', function () {
 
 })
 
+// Student leaves meeting
+studentleaveBtn.addEventListener('click', function () {
+  leave_room();
+  window.location.replace("/");
+
+})
+
+// Host leaves meeting
+hostleaveBtn.addEventListener('click', function () {
+  
+  leave_room();
+  close_room();
+  // Todo: Add attendance redirect
+
+})
+
 function broadcast_msg(message) {
   socket.emit('send_room_message', { room_id: ROOM_ID, msg: `${message}`, sender: USERNAME });
 }
@@ -66,6 +83,10 @@ function leave_room() {
   // window.location.replace("new target URL");
 }
 
+// Close Room
+function close_room() {
+  socket.emit('close-room', { room_id: ROOM_ID, user_id: USERNAME });
+}
 // window.addEventListener('beforeunload', () => {
 //   var formData = new FormData();
 //   formData.append('room_id', ROOM_ID);

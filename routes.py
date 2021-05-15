@@ -1,8 +1,10 @@
 import re
-from datetime import timedelta
+from datetime import datetime as dt, timedelta
 from functools import wraps
+from random import randint
 
 from flask import redirect, render_template, request, url_for, session
+from flask_weasyprint import render_pdf
 from pymongo import ReturnDocument
 from passlib.hash import oracle10
 
@@ -32,6 +34,17 @@ def user_verification(f):
     return decorated
 
 
+# Restrict access to the attendance report page
+def attendance_verification(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'report' not in session:
+            return redirect(url_for('search_attendance_report'))
+        return f(*args, **kwargs)
+
+    return decorated
+
+
 # MAIN ROUTES
 # Route for Homepage
 @app.route('/', methods=['GET', 'POST'])
@@ -47,14 +60,14 @@ def index():
             time_fmt = request.form.get('prompt')
             # Duration
             d_hour = int(request.form.get("mHour"))
+            m_duration = timedelta(hours=d_hour).seconds
 
             if re.search(r"^(\d{4})-(\d{2})-(\d{2})$", m_date) is None \
                     or (m_hour is None or m_minute is None) \
-                    or re.search(r"(am|pm)", time_fmt) is None:
+                    or re.search(r"(am|pm)", time_fmt) is None or m_duration > 10800:
                 return {"result": "Inaccurate information."}
 
             m_date_time = date_and_time(_date=m_date, _time=f"{m_hour}:{m_minute}", _fmt=time_fmt)
-            m_duration = timedelta(hours=d_hour).seconds
 
             meeting_collection = mongo.get_collection("meetings")
             stream_id, meeting_id = random_str_generator(5), random_str_generator(5)
@@ -144,14 +157,54 @@ def studio(_cid):
         # Update meeting status
         meeting_collection.find_one_and_update({"meeting_id": meeting_id},
                                                {"$set": {"status": "active"}})
-        return render_template('stream_pages/studio.html', stream_id=stream_id, room_id=meeting_id)
+        session['report'] = randint(1, 10000)   # session for accessing attendance report page
+        return render_template('stream_pages/studio.html', stream_id=stream_id, room_id=meeting_id, user_id="Host")
     # if meeting_data["status"] == "active" and time has not expired:
     #     return {"result": "Meeting is already in session."}
     return {"result": "Meeting has ended."}
 
 
 # TODO: Route for host ending meeting
-# TODO: Route for host printing attendance report
+# Route for host printing attendance report
+@app.route('/search_attendance_report', methods=['GET', 'POST'])
+def search_attendance_report():
+    meeting_collection = mongo.get_collection("meetings")
+
+    if request.method == "POST":
+        search_term = request.form.get("search_term")
+        result = re.search(r"^[a-zA-Z0-9]{3}$", search_term)
+        if search_term is None or result is None:
+            return {"result": "No results."}
+        meeting_data = meeting_collection.find_one({"$and": [{'OTP': search_term}, {'status': 'expired'}]},
+                                                   {'meeting_id': 1})
+        if meeting_data is None:
+            return {"result": "No results."}
+        session['report'] = randint(1, 10000)
+        return redirect(url_for("attendance_report", _mid=meeting_data["meeting_id"]))
+    return render_template('search_report.html')
+
+
+# Route for host printing attendance report
+@app.route('/attendance_report/<string:_mid>')
+@attendance_verification
+def attendance_report(_mid):
+    meeting_collection = mongo.get_collection("meetings")
+    meeting_data = meeting_collection.find_one({"meeting_id": _mid},
+                                               {'status': 0, 'is_verified': 0, 'OTP': 0, 'stream_id': 0, '_id': 0})
+    attendance: dict = meeting_data["attendance_records"]
+    duration = meeting_data["meeting_duration"]
+    start_datetime = meeting_data["meeting_start_dateTime"]
+    end_datetime = start_datetime + timedelta(seconds=duration)
+    meeting_details = [meeting_data["meeting_topic"], meeting_data["instructor"], start_datetime, end_datetime]
+    return render_template('attendance_report.html', attendance=attendance.values(), m_details=meeting_details)
+
+
+@app.route('/print_report/<string:_mid>_<string:_current>.pdf',
+           defaults={'_current': dt.now().strftime('%Y%m%d%H%M')})
+@attendance_verification
+def print_report_pdf(_mid, _current):
+    # Make a PDF from another view
+    return render_pdf(url_for('attendance_report'))
 
 
 # STUDENTS (VIEWERS) ROUTE
@@ -162,14 +215,15 @@ def join_meeting(join_params):
     if join_params == "auto":
         meeting_id = request.args.get("mid")
         check_meeting_id = re.search("^[a-zA-Z0-9]{5}$", meeting_id)
-        meeting_exist = meeting_collection.find_one({"meeting_id": meeting_id}, {"meeting_id": 1, "status": 1})
 
-        if check_meeting_id is not None and meeting_exist is not None:
-            if meeting_exist["status"] == "active":
-                return redirect(url_for('user_attendance', mid=meeting_exist["meeting_id"]))
-            if meeting_exist["status"] == "pending":
-                # Ensures users access the meeting only when the host has started
-                return {"result": "Meeting has not started."}
+        if check_meeting_id is not None:
+            meeting_exist = meeting_collection.find_one({"meeting_id": meeting_id}, {"meeting_id": 1, "status": 1})
+            if meeting_exist is not None:
+                if meeting_exist["status"] == "active":
+                    return redirect(url_for('user_attendance', mid=meeting_exist["meeting_id"]))
+                if meeting_exist["status"] == "pending":
+                    # Ensures users access the meeting only when the host has started
+                    return {"result": "Meeting has not started."}
         return {'result': "Invalid information."}
 
     if join_params == "details":
