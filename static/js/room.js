@@ -13,7 +13,7 @@ let divUserName = document.getElementById('user_name');
 socket.on('connect', () => {
   // socket.emit('store_user_credential', { client_id: socket.id });
   // socket.emit('store_room_user_credential', { room_id: ROOM_ID, client_id: socket.id });
-  socket.emit('join-room', { room_id: ROOM_ID, user_id: USERNAME});
+  socket.emit('join-room', { room_id: ROOM_ID, user_id: USER_ID, user_name: USERNAME });
 
 });
 
@@ -40,7 +40,7 @@ socket.on('server_response', data => {
 
 // Room Broadcast
 socket.on('receive_room_message', data => {
-  let paragraph = user_msg(data.sender, data.msg);
+  let paragraph = user_msg(data.sender, data.msg, chatSentAt());
   roomMsgBox.innerHTML += paragraph;
 });
 
@@ -73,19 +73,19 @@ hostleaveBtn.addEventListener('click', function () {
 })
 
 function broadcast_msg(message) {
-  socket.emit('send_room_message', { room_id: ROOM_ID, msg: `${message}`, sender: USERNAME });
+  socket.emit('send_room_message', { room_id: ROOM_ID, msg: `${message}`, sender: USERNAME});
 }
 
 
 // Leave Room
 function leave_room() {
-  socket.emit('leave-room', { room_id: ROOM_ID, user_id: USERNAME });
+  socket.emit('leave-room', { room_id: ROOM_ID, user_name: USERNAME });
   // window.location.replace("new target URL");
 }
 
 // Close Room
 function close_room() {
-  socket.emit('close-room', { room_id: ROOM_ID, user_id: USERNAME });
+  socket.emit('close-room', { room_id: ROOM_ID, user_id: USER_ID });
 }
 // window.addEventListener('beforeunload', () => {
 //   var formData = new FormData();
@@ -111,7 +111,7 @@ function host_msg(message) {
     `${message}` + " </p> "
 }
 
-function user_msg(sender, message) {
+function user_msg(sender, message, time_sent) {
   if (/[\w+\s\,\'\"\:\;\>\<\?\\/\$\@\#\%\^\&\*\(\)\-\+\=\|\}\{\]\[\.\~\`]{30,}?/.test(message)) {
     return " <p class=\"users text-white font-weight-light bg-dark border border-dark p-2\"> " +
       `<strong class="text-warning font-weight-bold">${sender}</strong> <br>` +
@@ -125,4 +125,24 @@ function user_msg(sender, message) {
 function notification(message) {
   return " <p class=\"text-center\"> " +
     `<strong class="text-success font-weight-bold">${message}</strong>` + " </p> "
+}
+
+function chatSentAt() {
+    var date = new Date();
+    var hours = date.getHours();
+    var minutes = date.getMinutes();
+
+    // Check whether AM or PM
+    var new_format = hours >= 12 ? 'pm' : 'am';
+
+    // Find current hour in AM-PM Format
+    hours = hours % 12;
+
+    // To display "0" as "12"
+    hours = hours ? hours : 12;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+
+    let result = hours + ':' + minutes + ' ' + new_format;
+
+    return result
 }

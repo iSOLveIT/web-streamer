@@ -119,39 +119,37 @@ http://127.0.0.1:4080/join_meeting/auto?mid={meeting_id}</a><p><br>
 
 # HOST ROUTES
 # Route for host authentication
-@app.route('/host/authentication', methods=["GET", "POST"])
+@app.route('/host/authentication', methods=["POST"])
 def host_auth():
-    if request.method == "POST":
-        ip_address = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-        multi_hosts = disallow_host(host_ip=ip_address)
-        if multi_hosts == "disallow":
-            return {"result": "Another meeting by Host is in progress"}
+    ip_address = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    multi_hosts = disallow_host(host_ip=ip_address)
+    if multi_hosts == "disallow":
+        return {"result": "Another meeting by Host is in progress"}
 
-        otp = request.form.get("meeting_passcode")
-        result = re.search(r"^[a-zA-Z0-9]{4}$", otp)
-        if otp is None or result is None:
-            return {"result": "Access Denied."}
-        meeting_collection = mongo.get_collection("meetings")
-        meeting_details = meeting_collection.find_one_and_update(
-            {"$and": [
-                {'OTP': otp}, {'is_verified': False}
-            ]},
-            {"$set": {"is_verified": True, "host_ip": ip_address}},
-            {'meeting_id': 1, 'stream_id': 1, 'is_verified': 1},
-            return_document=ReturnDocument.AFTER  # returns the updated version of the document instead
-        )
-        if meeting_details is not None and meeting_details['is_verified']:
-            try:
-                otp_hash = oracle10.hash(otp, user='isolveit')
-            except TypeError:
-                return {"result": "Error occurred, please try again"}
-            session["OTP"] = otp_hash
-            # session.permanent = True
-            # _class_id combines meeting_id and stream_id
-            _class_id = f"{meeting_details['stream_id']}{meeting_details['meeting_id']}"
-            return redirect(url_for("studio", _cid=_class_id))
+    otp = request.form.get("meetingOTP")
+    result = re.search(r"^[a-zA-Z0-9]{6}$", otp)
+    if otp is None or result is None:
         return {"result": "Access Denied."}
-    return render_template('main_pages/host_verify.html')
+    meeting_collection = mongo.get_collection("meetings")
+    meeting_details = meeting_collection.find_one_and_update(
+        {"$and": [
+            {'OTP': otp}, {'is_verified': False}
+        ]},
+        {"$set": {"is_verified": True, "host_ip": ip_address}},
+        {'meeting_id': 1, 'stream_id': 1, 'is_verified': 1},
+        return_document=ReturnDocument.AFTER  # returns the updated version of the document instead
+    )
+    if meeting_details is not None and meeting_details['is_verified']:
+        try:
+            otp_hash = oracle10.hash(otp, user='isolveit')
+        except TypeError:
+            return {"result": "Error occurred, please try again"}
+        session["OTP"] = otp_hash
+        # session.permanent = True
+        # _class_id combines meeting_id and stream_id
+        _class_id = f"{meeting_details['stream_id']}{meeting_details['meeting_id']}"
+        return redirect(url_for("studio", _cid=_class_id))
+    return {"result": "Access Denied."}
 
 
 # Route for host to view broadcast studio
@@ -161,7 +159,7 @@ def studio(_cid):
     stream_id, meeting_id = _cid[:5], _cid[5:]
     meeting_collection = mongo.get_collection("meetings")
     meeting_data = meeting_collection.find_one({'meeting_id': meeting_id},
-                                               {'status': 1, 'is_verified': 1, 'OTP': 1,
+                                               {'status': 1, 'is_verified': 1, 'OTP': 1, 'instructor': 1,
                                                 'meeting_start_dateTime': 1, 'meeting_duration': 1})
     meeting_end_date = meeting_data['meeting_start_dateTime'] + timedelta(seconds=meeting_data['meeting_duration'])
     check_otp = oracle10.verify(meeting_data['OTP'], session.get("OTP"), user='isolveit')
@@ -174,11 +172,14 @@ def studio(_cid):
                                                    {"$set": {"status": "active", "is_verified": True}})
             session["report"] = randint(1, 10000)  # session for accessing attendance report page
             # session.permanent = True
-            return render_template('stream_pages/studio.html', stream_id=stream_id, room_id=meeting_id, user_id="Host")
+            return render_template('stream_pages/studio.html', stream_id=stream_id,
+                                   room_id=meeting_id, user_id="Host", user_name=meeting_data['instructor'])
+        # If meeting host has login and meeting has not expired and is not the meeting from the same computer
         if meeting_data["status"] == "active" and meeting_data['is_verified'] is True and dt.now() < meeting_end_date:
             session["report"] = randint(1, 10000)  # session for accessing attendance report page
             # session.permanent = True
-            return render_template('stream_pages/studio.html', stream_id=stream_id, room_id=meeting_id, user_id="Host")
+            return render_template('stream_pages/studio.html', stream_id=stream_id,
+                                   room_id=meeting_id, user_id="Host", user_name=meeting_data['instructor'])
         return {"result": "Meeting has ended."}
     return {"result": "Access Denied."}
 
@@ -227,83 +228,64 @@ def print_report_pdf(_mid, _current):
     return render_pdf(url_for('attendance_report'))
 
 
+#  BOTH STUDENT AND HOST ROUTES
+@app.route('/verification_handle/<string:loader>')
+def all_verification(loader):
+    result = re.search(r"(host_verify|user_verify)", loader)
+    if result is None:
+        return redirect(url_for('index')), 301
+    return render_template('verification.html', load=loader)
+
+
 # STUDENTS (VIEWERS) ROUTE
-# Route for joining meeting by students
-@app.route('/join_meeting/<string:join_params>', methods=["GET", "POST"])
-def join_meeting(join_params):
-    meeting_collection = mongo.get_collection("meetings")
-    if join_params == "auto":
-        meeting_id = request.args.get("mid")
-        check_meeting_id = re.search("^[a-zA-Z0-9]{5}$", meeting_id)
-
-        if check_meeting_id is not None:
-            meeting_exist = meeting_collection.find_one({"meeting_id": meeting_id}, {"meeting_id": 1, "status": 1})
-            if meeting_exist is not None:
-                if meeting_exist["status"] == "active":
-                    return redirect(url_for('user_attendance', mid=meeting_exist["meeting_id"]))
-                if meeting_exist["status"] == "pending":
-                    # Ensures users access the meeting only when the host has started
-                    return {"result": "Meeting has not started."}
-        return {'result': "Invalid information."}
-
-    if join_params == "details":
-        if request.method == "POST":
-            meeting_id = request.form.get("mid")
-            check_meeting_id = re.search("^[a-zA-Z0-9]{5}$", meeting_id)
-            meeting_exist = meeting_collection.find_one({"meeting_id": meeting_id}, {"meeting_id": 1, "status": 1})
-
-            if check_meeting_id is not None and meeting_exist is not None:
-                if meeting_exist["status"] == "active":
-                    return redirect(url_for('user_attendance', mid=meeting_exist["meeting_id"]))
-                if meeting_exist["status"] == "pending":
-                    # Ensures users access the meeting only when the host has started
-                    return {"result": "Meeting has not started."}
-            return {'result': "Invalid information."}
-
-        return render_template('main_pages/join_meeting.html')  # Add error message
-
-
 # Route for student details input
-@app.route('/user/authentication/<string:mid>', methods=["GET", "POST"])
+@app.route('/user/authentication/<string:mid>', methods=["POST"])
 def user_attendance(mid):
+    meeting_id = request.form.get("mid")
+    display_name = request.form.get("display_name")
+    username: str = request.form.get("user_id", default="")
+    result = username.isdigit()
+
     meeting_collection = mongo.get_collection("meetings")
+    check_meeting_id = re.search("^[a-zA-Z0-9]{5}$", meeting_id)
 
-    if request.method == "POST":
-        meeting_data = meeting_collection.find_one({"meeting_id": mid}, {"stream_id": 1, "status": 1})
-        if meeting_data is not None and meeting_data["status"] == "active":
-            username = request.form.get("username", type=str)
-            result = re.search(r"^10[0-9]{6}$", username)
-            if username is None or result is None:
-                return {"result": "Incorrect information."}
+    if check_meeting_id is not None and not result:
+        meeting_exist = meeting_collection.find_one({"meeting_id": mid}, {"stream_id": 1, "status": 1})
+        if meeting_exist is not None:
+            if meeting_exist["status"] == "active":
+                multi_joins = disallow_join(room_id=mid, user_name=username)
+                if multi_joins == "disallow":
+                    return {"result": "User cannot join the same meeting twice."}
+                try:
+                    username_hash = oracle10.hash(username, user='isolveit')
+                except TypeError:
+                    return {"result": "Error occurred, please try again"}
+                session["USERNAME"] = username_hash
+                # session.permanent = True
+                # _class_id combines meeting_id and stream_id
+                _class_id = f"{meeting_exist['stream_id']}{mid}"
+                user_info = f"{username}_{display_name}"
+                return redirect(url_for("viewer", uid=user_info, _cid=_class_id)), 301
 
-            multi_joins = disallow_join(room_id=mid, user_name=username)
-            if multi_joins == "disallow":
-                return {"result": "User cannot join the same meeting twice."}
-            try:
-                username_hash = oracle10.hash(username, user='isolveit')
-            except TypeError:
-                return {"result": "Error occurred, please try again"}
-            session["USERNAME"] = username_hash
-            # session.permanent = True
-            # _class_id combines meeting_id and stream_id
-            _class_id = f"{meeting_data['stream_id']}{mid}"
-            return redirect(url_for("viewer", uid=username, _cid=_class_id))
-
-        return redirect(url_for('join_meeting', join_params='details'))
-    return render_template('main_pages/user_verify.html')
+            if meeting_exist["status"] == "pending":
+                # Ensures users access the meeting only when the host has started
+                return {"result": "Meeting has not started."}
+    return {"result": "Incorrect information."}
 
 
 # Route for students to view lecture platform
 @app.route('/meeting/v/<string:uid>/<string:_cid>')
 @user_verification
-def viewer(uid, _cid):
+def viewer(uid: str, _cid):
     stream_id, meeting_id = _cid[:5], _cid[5:]
+    username, display_name = uid.split('_')
     try:
         check_username = oracle10.verify(uid, session.get("USERNAME"), user='isolveit')
         if check_username is False:
             return {"result": "Incorrect information."}
 
-        return render_template('stream_pages/viewers.html', stream_id=stream_id, room_id=meeting_id, user_id=uid)
+        return render_template('stream_pages/viewers.html', stream_id=stream_id,
+                               room_id=meeting_id, user_id=username, user_name=display_name)
     except TypeError:
         return {"result": "Error occurred, please try again"}
 

@@ -62,7 +62,7 @@ def disconnect_students(*, room_id):
 
 
 # User management meeting
-def user_management(*, client_id, room_id, user_name):
+def user_management(*, client_id, room_id, user_name, user_id):
     # Purpose of function: For adding users or updating user details in case of a rejoin
     # Reasons for rejoin: User left but meeting is in progress or
     # Host ended meeting by mistake, this means users will rejoin
@@ -73,16 +73,18 @@ def user_management(*, client_id, room_id, user_name):
 
     if records != 0:
         for r_key, r_value in records.items():
-            if r_value[0] == user_name:
+            if r_value[0] == user_id:
                 # If user record exist, update client_id (key)
                 user_data = records.pop(f"{r_key}")  # Remove old data
                 user_data[1] = "joined"
+                user_data[4] = user_name
                 records.update([(client_id, user_data)])  # Update user record with new client_id as key
                 meeting_collection.find_one_and_update({"meeting_id": room_id},
                                                        {"$set": {"attendance_records": records}})
                 return client_id
     # Add user if no record exist
-    user_data = [user_name, "joined", dt.now().isoformat(), dt.now().isoformat()]
+    # user_records = [student_id, meeting_status, time_joined, time_left, name]
+    user_data = [user_id, "joined", dt.now().isoformat(), dt.now().isoformat(), user_name]
     records.update([(client_id, user_data)])
     meeting_collection.find_one_and_update({"meeting_id": room_id},
                                            {"$set": {"attendance_records": records}})

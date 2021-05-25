@@ -31,11 +31,12 @@ def handle_room_broadcast_message(message):
 def on_join(data):
     room_id = data['room_id']
     username = data['user_id']
+    display_name = data['user_name']
 
-    user_management(client_id=request.sid, room_id=room_id, user_name=username)
+    user_management(client_id=request.sid, room_id=room_id, user_id=username, user_name=display_name)
 
     # TODO: Add participant count as they join
-    message = f"{username} has joined the room."
+    message = f"{display_name} has joined the room."
     join_room(room_id)
     emit('message', message, to=room_id, include_self=False, namespace='/meeting')
 
@@ -44,7 +45,7 @@ def on_join(data):
 @socket_io.on('leave-room', namespace='/meeting')
 def on_leave(data):
     room_id = data['room_id']
-    username = data['user_id']
+    display_name = data['user_name']
 
     meeting_collection = mongo.get_collection("meetings")
     meeting_collection.find_one_and_update({"meeting_id": room_id},
@@ -53,7 +54,7 @@ def on_leave(data):
                                                f"attendance_records.{request.sid}.3": dt.now().isoformat()}})
     # TODO: Remove participant count as they leave
 
-    message = f"{username} has left the room."
+    message = f"{display_name} has left the room."
     leave_room(room_id)
     emit('message', message, to=room_id, include_self=False, namespace='/meeting')
 
@@ -92,7 +93,8 @@ def test_disconnect():
     )
     room_id = meeting_data["meeting_id"]
     username = meeting_data["attendance_records"][f"{request.sid}"][0]
-    message = f"{username} has left the room."
+    display_name = meeting_data["attendance_records"][f"{request.sid}"][0]
+    message = f"{display_name} has left the room."
     # clear session
     session.pop('USERNAME', None)
     emit('message', message, to=room_id, include_self=False, namespace='/meeting')
