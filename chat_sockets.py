@@ -1,18 +1,27 @@
-from datetime import datetime as dt, timedelta
+from datetime import datetime as dt
+from datetime import timedelta
 
-from flask import request, session
-from flask_socketio import emit, join_room, leave_room, close_room
+from flask import flash, redirect, request, session, url_for
+from flask_socketio import close_room, emit, join_room, leave_room
 from pymongo import ReturnDocument
 
-from project import socket_io, mongo
-from project.sub_functions import user_management, disconnect_students
+from project import mongo, socket_io
+from project.sub_functions import disconnect_students, user_management
 
 
 # Client Connected
 @socket_io.on('connect', namespace='/meeting')
 def test_connect():
-    emit('server_response', {'result': 'Connected!'},
+    emit('server_response', {'result': 'Connected to room'},
          to=request.sid, namespace='/meeting')
+
+
+# Send Notification
+@socket_io.on('notice', namespace='/meeting')
+def notification(message):
+    room_id = message['room_id']
+    msg = message['msg']
+    emit('room_notice', msg, to=room_id, include_self=False, namespace='/meeting')
 
 
 # Room Broadcasting message to all room clients excluding the sender
@@ -30,55 +39,54 @@ def handle_room_broadcast_message(message):
 @socket_io.on('join-room', namespace='/meeting')
 def on_join(data):
     room_id = data['room_id']
-    username = data['user_id']
+    user_id = data['user_id']
     display_name = data['user_name']
 
-    user_management(client_id=request.sid, room_id=room_id, user_id=username, user_name=display_name)
+    participants = user_management(client_id=request.sid, room_id=room_id,
+                                   user_id=user_id, user_name=display_name)
 
-    # TODO: Add participant count as they join
-    message = f"{display_name} has joined the room."
+    message = f"{user_id}"
     join_room(room_id)
-    emit('message', message, to=room_id, include_self=False, namespace='/meeting')
+    emit('add_members', participants, to=request.sid, include_self=True, namespace='/meeting')
+    emit('add_member', message, to=room_id, include_self=False, namespace='/meeting')
 
 
 # Leave room
 @socket_io.on('leave-room', namespace='/meeting')
 def on_leave(data):
     room_id = data['room_id']
-    display_name = data['user_name']
+    user_id = data['user_id']
 
     meeting_collection = mongo.get_collection("meetings")
     meeting_collection.find_one_and_update({"meeting_id": room_id},
                                            {"$set": {
                                                f"attendance_records.{request.sid}.1": "left",
-                                               f"attendance_records.{request.sid}.3": dt.now().isoformat()}})
-    # TODO: Remove participant count as they leave
+                                               f"attendance_records.{request.sid}.3": dt.now().strftime("%Y-%m-%d %H:%M")}})
 
-    message = f"{display_name} has left the room."
+    message = f"{user_id}"
     leave_room(room_id)
-    emit('message', message, to=room_id, include_self=False, namespace='/meeting')
+    session.pop('USER_ID', None)
+    emit('remove_member', message, to=room_id, include_self=False, namespace='/meeting')
 
 
 # Close and delete room
 @socket_io.on('close-room', namespace='/meeting')
 def on_close(data):
     room_id = data['room_id']
-    username = data['user_id']
+    user_id = data['user_id']
 
-    if username == "Host":
-        emit('message', f"Meeting ended by {username}.", to=room_id, include_self=False, namespace='/meeting')
+    if user_id == "Host":
+        session.pop('OTP', None)
+        emit('class_end', to=room_id, include_self=False, namespace='/meeting')  # Handles redirecting students
         close_room(room_id)
-
-        meeting_collection = mongo.get_collection("meetings")
-        meeting_collection.find_one_and_update({"meeting_id": room_id},
-                                               {"$set": {"status": "expired"}})
+        disconnect_students(room_id=room_id)  # disconnect all users
 
 
 # Client Disconnected
 @socket_io.on('disconnect', namespace='/meeting')
 def test_disconnect():
     # User leaving by closing browser tab or refreshing.
-    left_at = dt.now().isoformat()
+    left_at = dt.now().strftime("%Y-%m-%d %H:%M")
     meeting_collection = mongo.get_collection("meetings")
     meeting_data = meeting_collection.find_one_and_update(
         {f"attendance_records.{request.sid}": {"$exists": 1}},  # the $exists operator checks for existence
@@ -92,28 +100,36 @@ def test_disconnect():
         return_document=ReturnDocument.AFTER
     )
     room_id = meeting_data["meeting_id"]
-    username = meeting_data["attendance_records"][f"{request.sid}"][0]
-    display_name = meeting_data["attendance_records"][f"{request.sid}"][0]
-    message = f"{display_name} has left the room."
-    # clear session
-    session.pop('USERNAME', None)
-    emit('message', message, to=room_id, include_self=False, namespace='/meeting')
-    if username == "Host":
+    user_id = meeting_data["attendance_records"][f"{request.sid}"][0]
+    message = f"{user_id}"
+    emit('remove_member', message, to=room_id, include_self=False, namespace='/meeting')
+
+    if user_id == "Host":
         duration = meeting_data["meeting_duration"]
         start_datetime = meeting_data["meeting_start_dateTime"]
         end_datetime = start_datetime + timedelta(seconds=duration)
 
         # If meeting time is not up but host exits meeting due to network failures or computer issues
-        if (time_stopped := dt.now()) < end_datetime:
+        # Disconnect everyone and allow them to rejoin again
+        if start_datetime <= (time_stopped := dt.now()) < end_datetime:
             duration_remaining = duration - (time_stopped - start_datetime).seconds
             meeting_collection.find_one_and_update({"meeting_id": room_id},
                                                    {"$set": {"duration_left": duration_remaining,
                                                              "status": "pending", "is_verified": False}})
-            # clear session
-            session.pop('OTP', None)
-            session.clear()
-        disconnect_students(room_id=room_id)  # disconnect all users
-        close_room(room_id)
+            emit('class_end', to=room_id, include_self=False, namespace='/meeting')     # Handles redirecting students
+            close_room(room_id)
+            disconnect_students(room_id=room_id)  # disconnect all users
+            flash(message="Class ended before time. Please restart the class if you are the Host.", category="notice")
+            return redirect(url_for('all_verification', loader="host_verify"))
 
-# User leaving by closing browser tab. Write that js prompt to ask users if they want to leave a site
-# In this case if a user clicks on the Leave site button we trigger the leave room handle
+        meeting_collection.find_one_and_update({"meeting_id": room_id},
+                                               {"$set": {"status": "expired", "duration_left": 0}})
+
+        emit('class_end', to=room_id, include_self=False, namespace='/meeting')     # Handles redirecting students
+        close_room(room_id)
+        disconnect_students(room_id=room_id)  # disconnect all users
+        flash(message="Class has ended.", category="notice")
+        return redirect(url_for('index'))
+
+
+# User leaving by closing browser tab.

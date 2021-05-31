@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='viewer.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='subfunctions.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='icomoon.css') }}">
+
+    <title>Student | iSTREAM</title>
+
+    <script>
+        const ROOM_ID = "{{ room_id }}";    // Class
+        const STREAM_ID = "{{ stream_id }}"; // Stream 
+		const USER_ID = "{{ user_id }}";    // Index number
+		const USERNAME = "{{ user_name }}"; // Display name
+		const SECONDS = parseInt("{{seconds}}");
+    </script>
+
+</head>
+
+<body>
+    <section class="desktop">
+        <div class="page-terminate text-center">Class is active. Closing or refreshing this page disconnects you from the class.</div>
+        <nav class="navbar navbar-expand-lg app-nav">
+            <div class="container">
+                <button id="meeting_btn">
+                    <i class="icon-info-circle" style="font-size: 16pt;"> 
+                        <span style="font-family: Karla;">Class details</span>
+                    </i>
+                </button>
+                <p style="margin-bottom: 0;"><b class="time">00:00:00</b></p>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent" style="flex-grow: 0;">
+                    <ul class="navbar-nav nav-menu mr-auto mb-2 mb-lg-0">                        
+                        <li class="nav-item dropdown me-2">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="badge bg-counter users_counts">0</span> Participants
+                            </a>
+                            <div class="member-space dropdown-menu" aria-labelledby="navbarDropdown"></div>
+                        </li>
+                        <button class="btn btn-danger" id="viewer_desktop_leave_btn" style="padding: 0px 10px; font-size: 14pt" >Leave</button>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="meeting_details text-break">
+            <h5 class="fw-light" style="text-transform: uppercase;">{{ meeting_data["meeting_topic"] }}</h5>
+            <p><b>Class ID:</b> {{ room_id }}</p>
+            <p style="text-transform: capitalize;"><b>Host:</b> {{ meeting_data["instructor"] }}</p>
+            <p>
+                <b>Invite Link:</b>
+                <a href="{{ url_for('all_verification', loader='user_verify',  mid=room_id) }}">
+                    /join_meeting/v/user_verify?mid={{room_id}}</a>
+            </p>
+            <p style="text-transform: capitalize;"><b>Student:</b> {{ user_id }}</p>
+        </div>
+
+        <div class="message" style="display: none;"></div>
+        {% include 'includes/_message.html' %}
+        <div class="container mt-2" style="max-height: 650px;">
+            <div class="row" style="max-height: 100%; color: #fff;">
+                <div class="col-7 desktop-iframe" style=" margin-right: 10px; height: 500px; padding: 0;"></div>
+                <div class="col-4 chats_feature">
+                    <div class="card-header text-white text-uppercase font-weight-bold">
+                        <p>Chat Room</p>
+                    </div>
+                    <div class="chat-space"></div>
+                    <div class="chat-form">
+                        <input type="text" name="inputChat" class="form-control inputMessage desktop_msg_area" autocomplete="off"
+                            minlength="10" maxlength="300" placeholder="Type a message" required>
+                        <button id="desktop_send_btn">
+                            <i class="icon-send"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="mobile">
+        <header class="app-header">
+            <div class="holder">
+                <button id="m_meeting_btn">
+                    <i class="icon-info-circle"> <span style="font-family: Karla; font-size: 12pt;">Class
+                            details</span></i>
+                </button>
+                <h3><b class="time">00:00:00</b></h3>
+            </div>
+        </header>
+        <div class="m_meeting_details text-break">
+            <h5 class="fw-bolder fs-4" style="text-transform: uppercase;">{{ meeting_data["meeting_topic"] }}</h5>
+            <p><b>Class ID:</b> {{ room_id }}</p>
+            <p style="text-transform: capitalize;"><b>Host:</b> {{ meeting_data["instructor"] }}</p>
+            <p>
+                <b>Invite Link:</b>
+                <a href="{{ url_for('all_verification', loader='user_verify',  mid=room_id) }}">
+                    /join_meeting/v/user_verify?mid={{room_id}}</a>
+            </p>
+            <p style="text-transform: capitalize;"><b>Student:</b> {{ user_id }}</p>
+        </div>
+
+        <div class="container app-body">
+            {% include 'includes/_message.html' %}
+            <div class="message" style="display: none;"></div>
+            <div class="col-12 antmedia_holder mobile-iframe" style="padding: 0;"></div>
+            <div class="col-12 feature_holder">
+                <div class="chats_feature" data-feature="off">
+                    <div class="card-header text-white text-uppercase fw-bold">
+                        <p>Chat Room</p>
+                        <button class="close_chat_feature_btn">
+                            <i class="icon-close"></i>
+                        </button>
+                    </div>
+                    <div class="chat-space"></div>
+                    <div class="chat-form" id="send-msg" >
+                        <input type="text" name="inputChat"  class="form-control inputMessage mobile_msg_area" autocomplete="off"
+                            minlength="10" maxlength="300" placeholder="Type a message" required>
+                        <button id="mobile_send_btn">
+                            <i class="icon-send"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="participants_feature" data-feature="off">
+                    <div class="card-header text-white text-uppercase font-weight-bold">
+                        <p>Participants</p>
+                        <button class="close_users_feature_btn">
+                            <i class="icon-close"></i>
+                        </button>
+                    </div>
+                    <div class="member-space mb-1"></div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="btn-wheel">
+            <div class="btn-wheel_main">
+                <button type="button" id="main_btn">
+                    <i class="icon-menu"></i>
+                </button>
+            </div>
+            <div class="btn-wheel_action_contacts" data-toggle="off">
+                <button type="button" class="sub_btns" id="chat_btn">
+                    <i class="icon-chat_bubble"></i>
+                </button>
+                <button type="button" class="sub_btns" id="users_btn">
+                    <i class="icon-users"></i>
+                    <span class="users_counts">0</span>
+
+                </button>
+                <button type="button" class="sub_btns" id="viewer_mobile_leave_btn">
+                    <i class="icon-sign-out"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js" integrity="sha512-eVL5Lb9al9FzgR63gDs1MxcDS2wFu3loYAgjIH0+Hg38tCS8Ag62dwKyH+wzDb+QauDpEZjXbMn11blw8cbTJQ==" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/viewer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/room.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sub_functions.js') }}"></script>
+
+</body>
+
+</html>

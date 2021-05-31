@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='contact.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='icomoon.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <title>Contact Us | iSTREAM</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Satisfy&display=swap');
+    </style> 
+</head>
+
+<body>
+
+    <div class="main">
+        <nav class="navbar navbar-expand-lg app-nav">
+            <div class="container">
+                <h2><b><a class="navbar-brand" href="#"
+                            style="font-family: 'Satisfy', cursive; letter-spacing: 3px; text-decoration: none; color: #fff; font-size: 24pt;">iSTREAM</a></b></h2>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="icon-menu"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent" style="flex-grow: 0;">
+                    <ul class="navbar-nav nav-menu mr-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/">Welcome</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/join_meeting/v/host_verify">Host Class</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/join_meeting/v/user_verify">Join Class</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/search_attendance_report">Attendance</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/contact_us">Contact Us</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="p-3 verify_box">
+            
+            <div class="mb-3">
+                <h3 class="main-title text-center">Contact Form</h3>
+            </div>
+            <div>
+                {% include 'includes/_message.html' %}
+                <form action="" method="POST" class="mt-2">
+                    <div>
+                        <div class="mb-2">
+                            <label for="inputName" class="form-label">Name</label>
+                            <input type="text" name="c_name" autocomplete="off" class="form-control" id="inputName"
+                               minlength="2" maxlength="50" placeholder="e.g. Karen Doe" required>
+                        </div>
+                        <div class="mb-2">
+                            <label for="inputEmail" class="form-label">Email</label>
+                            <div class="input-group">
+                                <input type="email" name="c_email" autocomplete="off" class="form-control" inputmode="email"
+                                id="inputEmail" pattern="^([\w\d\-\.]+?)@([a-z]+?).(com|org|net|edu)(.[a-zA-Z]{2})??$"
+                                maxlength="400" placeholder="e.g. example@domain.com" aria-describedby="inputValidate" required>
+                                <span class="validate input-group-text border-start-0" id="inputValidate"
+                                style="background-color: transparent; margin-left: 0px; padding-left: 5px; padding-right: 24px;"></span>
+                            </div>
+                            
+                        </div>
+                        <div class="mb-2">
+                            <label for="inputSubject" class="form-label">Subject</label>
+                            <input type="text" name="c_subj" autocomplete="off" class="form-control" id="inputSubject"
+                                minlength="5" maxlength="100" placeholder="e.g. How to Join Class" required>
+                        </div>
+                        <div class="mb-2">
+                            <label for="inputMessage" class="form-label">Message</label>
+                            <textarea name="c_msg" id="inputMessage" class="form-control" rows="3" minlength="10" maxlength="300" 
+                            placeholder="Write message here" required></textarea>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-stream">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div> 
+    </div>
+
+
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sub_functions.js') }}"></script>
+</body>
+</html>

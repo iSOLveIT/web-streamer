@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='verify.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='icomoon.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    
+    <title>Verification | iSTREAM</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Satisfy&display=swap');
+    </style> 
+</head>
+
+<body>
+
+    <div class="main">
+        <nav class="navbar navbar-expand-lg app-nav">
+            <div class="container">
+                <h2><b><a class="navbar-brand" href="#"
+                            style="font-family: 'Satisfy', cursive; letter-spacing: 3px; text-decoration: none; color: #fff; font-size: 24pt;">iSTREAM</a></b></h2>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="icon-menu"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent" style="flex-grow: 0;">
+                    <ul class="navbar-nav nav-menu mr-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/">Welcome</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/join_meeting/v/host_verify">Host Class</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/join_meeting/v/user_verify">Join Class</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/search_attendance_report">Attendance</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/contact_us">Contact Us</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <br><br>
+        {% if load == 'host_verify' %}
+            <div class="p-3 verify_box">
+                <div class="mb-3">
+                    <h3 class="main-title text-center">Host Verifcation</h3>
+                </div>
+                <div class="text-center">
+                    {% include 'includes/_message.html' %}
+                    <form action="/host/authentication" method="POST" class="mt-2">
+                        <div class="mb-4">
+                            <input type="text" name="meetingOTP" autocomplete="off" class="form-control" id="inputOTP" 
+                            minlength="4" maxlength="4" placeholder="Enter class OTP" required>
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-stream">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        {% endif %}
+
+        {% if load == 'user_verify' %}
+            <div class="p-3 verify_box">
+                <div class="mb-3">
+                    <h3 class="main-title text-center">Join Meeting</h3>
+                </div>
+                <div>
+                    {% include 'includes/_message.html' %}
+                    <form action="/user/authentication" method="POST" class="mt-2">
+                        <div class="mb-3">
+                            <div>
+                                <label for="inputMeetingID" class="form-label">Class ID</label>
+                                <input onfocus="Meeting()" type="text" name="mid" autocomplete="off" class="form-control student" id="inputMeetingID"
+                                    pattern="^[a-zA-Z0-9]{5}$" maxlength="5" value="{{ meeting_id }}" placeholder="Enter class ID" required>
+                                <span class="validate meet_id"></span>
+                            </div>
+                            <div class="mb-2">
+                                <label for="inputName" class="form-label">Name</label>
+                                <input type="text" name="display_name" autocomplete="off" class="form-control"
+                                    id="inputName" minlength="2" maxlength="20" placeholder="Enter your name" required>
+                            </div>
+                            <div>
+                                <label for="inputID" class="form-label">Index Number</label>
+                                <input type="text" oninput="Student()" name="user_id" autocomplete="off" class="form-control student" id="inputID"
+                                    pattern="^10[0-9]{6}$" maxlength="8" inputmode="numeric" placeholder="Enter your student ID" required>
+                                <span class="validate id_num"></span>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-stream">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+        
+        
+    </div>
+
+
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/verify.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sub_functions.js') }}"></script>
+</body>
+
+</html>

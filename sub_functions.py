@@ -1,12 +1,16 @@
+from datetime import datetime as dt
+from datetime import timedelta
 from random import sample
 from string import ascii_letters
-from datetime import datetime as dt, timedelta
-# import timeit
-from project import mongo
+
+from flask_mail import Message
+from pymongo import ReturnDocument
+
+from project import application, celery, mail, mongo
 
 
 # Combines date and time
-def date_and_time(*, _date, _time, _fmt):
+def date_and_time(*, _date, _time, _fmt) -> dt:
     """
     The function performs the ff.:
         - convert _time from 12 hour to 24 hour based on value for format
@@ -46,6 +50,24 @@ def random_str_generator(str_length):
     return output
 
 
+# Generate meeting details string
+def generate_meeting_details(*, meeting_data):
+    msg = f'''{meeting_data['user']} is inviting you to a scheduled iSTREAM class.
+
+Class Details:
+    - Instructor: {meeting_data['user']}
+    - Topic: {meeting_data['topic']}
+    - Scheduled Start Date and Time: {meeting_data['start_class']}
+    - Duration: {sec_to_time_format(meeting_data['duration'])} hour(s)
+    - Class ID: {meeting_data['meeting_id']}
+    - Join iSTREAM Class: http://127.0.0.1:15000/join_meeting/v/user_verify?mid={meeting_data['meeting_id']}
+
+NOTE: We emailed access code for starting class (Class OTP) to the email address provided.
+Thank you.
+'''
+    return msg
+
+
 # Disconnect students if host disconnect
 def disconnect_students(*, room_id):
     # Add user to attendance records in DB
@@ -58,7 +80,6 @@ def disconnect_students(*, room_id):
             records[f"{r_key}"] = r_value
         meeting_collection.find_one_and_update({"meeting_id": room_id},
                                                {"$set": {"attendance_records": records}})
-    pass
 
 
 # User management meeting
@@ -79,26 +100,32 @@ def user_management(*, client_id, room_id, user_name, user_id):
                 user_data[1] = "joined"
                 user_data[4] = user_name
                 records.update([(client_id, user_data)])  # Update user record with new client_id as key
-                meeting_collection.find_one_and_update({"meeting_id": room_id},
-                                                       {"$set": {"attendance_records": records}})
-                return client_id
+                members = meeting_collection.find_one_and_update({"meeting_id": room_id},
+                                                                 {"$set": {"attendance_records": records}},
+                                                                 projection={'attendance_records': 1, '_id': 0},
+                                                                 return_document=ReturnDocument.AFTER)
+
+                return [user[0] for user in members['attendance_records'].values() if user[1] == "joined"]
     # Add user if no record exist
-    # user_records = [student_id, meeting_status, time_joined, time_left, name]
-    user_data = [user_id, "joined", dt.now().isoformat(), dt.now().isoformat(), user_name]
+    # user_records = [user_id, meeting_status, time_joined, time_left, name]
+    user_data = [user_id, "joined", dt.now().strftime("%Y-%m-%d %H:%M"),
+                 dt.now().strftime("%Y-%m-%d %H:%M"), user_name]
     records.update([(client_id, user_data)])
-    meeting_collection.find_one_and_update({"meeting_id": room_id},
-                                           {"$set": {"attendance_records": records}})
-    return client_id
+    members = meeting_collection.find_one_and_update({"meeting_id": room_id},
+                                                     {"$set": {"attendance_records": records}},
+                                                     projection={'attendance_records': 1, '_id': 0},
+                                                     return_document=ReturnDocument.AFTER)
+    return [user[0] for user in members['attendance_records'].values() if user[1] == "joined"]
 
 
 # Disallow user from joining the same meeting twice
-def disallow_join(*, room_id, user_name):
+def disallow_join(*, room_id, user_id):
     meeting_collection = mongo.get_collection("meetings")
     meeting_data = meeting_collection.find_one({"meeting_id": room_id}, {"attendance_records": 1, "_id": 0})
     records: dict = meeting_data['attendance_records']
     if len(records) != 0:
         for r_key, r_value in records.items():
-            if r_value[0] == user_name and r_value[1] == "joined":
+            if r_value[0] == user_id and r_value[1] == "joined":
                 # User record exist and user has joined meeting
                 return "disallow"
     return "allow"
@@ -110,14 +137,50 @@ def disallow_host(*, host_ip):
     meeting_data = meeting_collection.find({"host_ip": host_ip},
                                            {"status": 1, "meeting_start_dateTime": 1,
                                             "meeting_duration": 1, "_id": 0})
-    check_status = [True for item in meeting_data if item['status'] == 'active' and dt.now() < (item['meeting_start_dateTime'] + timedelta(seconds=item['meeting_duration']))]
+    check_status = [True for item in meeting_data if item['status'] == 'active' and dt.now() < (
+            item['meeting_start_dateTime'] + timedelta(seconds=item['meeting_duration']))]
     if True in check_status:
         return "disallow"
     return "allow"
 
 
-# if __name__ == '__main__':
-#     import timeit
-#     # s = f"create_broadcast(meeting_name={random_str_generator(3)})"
-#     print(timeit.timeit(stmt="create_broadcast()", setup="from __main__ import create_broadcast",
-#                         number=100))
+# Send meeting details to Host
+@celery.task
+def send_meeting_details_task(email_data):
+    msg = Message("Scheduled Class Details", sender=("iSTREAM", "isolveitgroup@gmail.com"),
+                  recipients=email_data['recipient'])
+    msg.body = f'''{email_data['user']} is inviting you to a scheduled iSTREAM class.
+
+Class Details:
+        - Instructor: {email_data['user']}
+        - Topic: {email_data['topic']}
+        - Scheduled Start Date and Time: {email_data['start_class']}
+        - Duration: {sec_to_time_format(email_data['duration'])} hour(s)
+        - Class ID: {email_data['meeting_id']}
+        - Join iSTREAM Class: http://127.0.0.1:15000/join_meeting/v/user_verify?mid={email_data['meeting_id']}
+
+NB: Please don't share your meeting OTP (One-Time Password) with anyone.
+Class OTP: {email_data['otp']}
+
+Best Regards,
+iSTREAM
+'''
+    with application.app_context():
+        mail.send(msg)
+
+
+# Send contact information to iSTREAM
+@celery.task
+def contact_us_task(email_data):
+    msg = Message(email_data['topic'], sender=("iSTREAM", "isolveitgroup@gmail.com"),
+                  recipients=["isolveitgroup@gmail.com"])
+    msg.body = f'''Hello iSTREAM,
+{email_data['message']}
+Best Regards,
+{email_data['user'].title()}
+
+Sender's Email: {email_data['email']}
+Sent at: {dt.now().strftime("%A, %d %B, %Y %I:%M %p")}
+'''
+    with application.app_context():
+        mail.send(msg)
