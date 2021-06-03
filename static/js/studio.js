@@ -241,7 +241,7 @@ window.onload = function () {
 var isMobile = /iPhone|iPad|iPod|Android/.test(navigator.userAgent);
 var desktop_iframe = document.querySelector('.desktop-iframe');
 var mobile_iframe = document.querySelector('.mobile-iframe');
-var add_iframe = `<iframe src="http://localhost:5080/LiveApp/index.html?id=${STREAM_ID}" allowfullscreen allow="camera; microphone; display-capture;"></iframe>`
+var add_iframe = `<iframe title="Video captured" src="http://localhost:5080/LiveApp/index.html?id=${STREAM_ID}" allowfullscreen allow="camera; microphone; display-capture;"></iframe>`
 
 if (isMobile == true) {
     desktop_iframe.innerHTML = "";

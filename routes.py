@@ -2,7 +2,6 @@ import re
 from datetime import datetime as dt
 from datetime import timedelta
 from functools import wraps
-from random import randint
 
 from flask import flash, redirect, render_template, request, session, url_for, abort
 from flask_weasyprint import render_pdf
@@ -67,8 +66,7 @@ def index():
             m_date_time = date_and_time(_date=m_date, _time=f"{m_hour}:{m_minute}", _fmt=time_fmt)
 
             meeting_collection = mongo.get_collection("meetings")
-            stream_id, meeting_id = random_str_generator(5), random_str_generator(5)
-            otp = random_str_generator(4)
+            stream_id, meeting_id, otp = random_str_generator(5), random_str_generator(5), random_str_generator(4)
 
             prevent_idempotency = meeting_collection.find_one(
                 {"$and": [
@@ -90,7 +88,7 @@ def index():
                 "optional_email": optional_email,
                 "meeting_topic": m_topic,
                 "meeting_start_dateTime": m_date_time,
-                "meeting_duration": m_duration,
+                "meeting_end_dateTime": m_date_time + timedelta(seconds=m_duration),
                 "duration_left": m_duration,
                 "OTP": otp,
                 "host_ip": ip_address,
@@ -157,11 +155,11 @@ def studio(_cid):
     meeting_collection = mongo.get_collection("meetings")
     meeting_data = meeting_collection.find_one({'meeting_id': meeting_id},
                                                {'status': 1, 'is_verified': 1, 'OTP': 1, 'instructor': 1,
-                                                'meeting_start_dateTime': 1, 'meeting_duration': 1,
+                                                'meeting_start_dateTime': 1, 'meeting_end_dateTime': 1,
                                                 "meeting_topic": 1})
     # Calculate class end date and duration left
-    meeting_end_date = meeting_data['meeting_start_dateTime'] + timedelta(seconds=meeting_data['meeting_duration'])
-    seconds_left = meeting_data['meeting_duration'] - (dt.now() - meeting_data['meeting_start_dateTime']).seconds
+    meeting_end_date = meeting_data['meeting_end_dateTime']
+    seconds_left = (meeting_end_date - dt.now()).seconds
     check_otp = oracle10.verify(meeting_data['OTP'], session.get("OTP"), user='isolveit')
     permit_starting_class = [True if meeting_data['meeting_start_dateTime'] <= dt.now() < meeting_end_date else False]
 
@@ -199,13 +197,13 @@ def search_attendance_report():
             return render_template('attendance.html')
         meeting_data = meeting_collection.find_one({"$and": [{'OTP': search_term}, {'status': 'expired'}]},
                                                    {'meeting_topic': 1, 'meeting_start_dateTime': 1,
-                                                    'meeting_duration': 1, 'meeting_id': 1})
+                                                    'meeting_end_dateTime': 1, 'meeting_id': 1})
         if meeting_data is None:
             return render_template('attendance.html')
-        end_datetime = meeting_data['meeting_start_dateTime'] + timedelta(seconds=meeting_data['meeting_duration'])
+
         data = [meeting_data['meeting_topic'].upper(),
                 meeting_data['meeting_start_dateTime'].strftime("%A, %d %B, %Y %I:%M %p"),
-                end_datetime.strftime("%A, %d %B, %Y %I:%M %p"),
+                meeting_data['meeting_end_dateTime'].strftime("%A, %d %B, %Y %I:%M %p"),
                 meeting_data['meeting_id']]
         return render_template('attendance.html', results=data)
     return render_template('attendance.html')
@@ -217,14 +215,12 @@ def attendance_report(_mid):
     meeting_collection = mongo.get_collection("meetings")
     meeting_data = meeting_collection.find_one({"meeting_id": _mid}, {'status': 0, 'is_verified': 0,
                                                                       'meeting_email': 0, 'OTP': 0, 'host_ip': 0,
-                                                                      'stream_id': 0, '_id': 0})
+                                                                      'stream_id': 0, '_id': 0, 'meeting_duration': 0})
     attendance: dict = meeting_data["attendance_records"]
-    duration = meeting_data["meeting_duration"]
-    start_datetime = meeting_data["meeting_start_dateTime"]
-    end_datetime = start_datetime + timedelta(seconds=duration)
     meeting_details = [meeting_data["meeting_topic"].upper(), meeting_data["meeting_id"],
-                       meeting_data["instructor"].title(), start_datetime.strftime("%A, %d %B, %Y @ %I:%M %p"),
-                       end_datetime.strftime("%A, %d %B, %Y @ %I:%M %p"), len(attendance)]
+                       meeting_data["instructor"].title(),
+                       meeting_data["meeting_start_dateTime"].strftime("%A, %d %B, %Y @ %I:%M %p"),
+                       meeting_data['meeting_end_dateTime'].strftime("%A, %d %B, %Y @ %I:%M %p"), len(attendance)]
     return render_template('report.html', attendance=attendance.values(), m_details=meeting_details)
 
 
@@ -329,10 +325,10 @@ def viewer(uid: str, _cid):
 
     meeting_collection = mongo.get_collection("meetings")
     meeting_data = meeting_collection.find_one({"meeting_id": meeting_id},
-                                               {"instructor": 1, "meeting_topic": 1, "meeting_duration": 1,
-                                                "meeting_start_dateTime": 1, "_id": 0})
+                                               {"instructor": 1, "meeting_topic": 1,
+                                                "meeting_start_dateTime": 1, "meeting_end_dateTime": 1, "_id": 0})
     # Calculate duration left before meeting ends
-    seconds_left = meeting_data['meeting_duration'] - (dt.now() - meeting_data['meeting_start_dateTime']).seconds
+    seconds_left = (meeting_data['meeting_end_dateTime'] - dt.now()).seconds
     flash(message=f"Welcome {display_name} to the iSTREAM class.", category="notice")
     return render_template('viewer.html', stream_id=stream_id, room_id=meeting_id, seconds=seconds_left,
                            user_id=user_id, user_name=display_name, meeting_data=meeting_data)

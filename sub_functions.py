@@ -60,7 +60,7 @@ Class Details:
     - Scheduled Start Date and Time: {meeting_data['start_class']}
     - Duration: {sec_to_time_format(meeting_data['duration'])} hour(s)
     - Class ID: {meeting_data['meeting_id']}
-    - Join iSTREAM Class: http://127.0.0.1:15000/join_meeting/v/user_verify?mid={meeting_data['meeting_id']}
+    - Join iSTREAM Class: http://127.0.0.1:18000/join_meeting/v/user_verify?mid={meeting_data['meeting_id']}
 
 NOTE: We emailed access code for starting class (Class OTP) to the email address provided.
 Thank you.
@@ -135,10 +135,9 @@ def disallow_join(*, room_id, user_id):
 def disallow_host(*, host_ip):
     meeting_collection = mongo.get_collection("meetings")
     meeting_data = meeting_collection.find({"host_ip": host_ip},
-                                           {"status": 1, "meeting_start_dateTime": 1,
-                                            "meeting_duration": 1, "_id": 0})
-    check_status = [True for item in meeting_data if item['status'] == 'active' and dt.now() < (
-            item['meeting_start_dateTime'] + timedelta(seconds=item['meeting_duration']))]
+                                           {"status": 1, "meeting_end_dateTime": 1, "_id": 0})
+    check_status = [True for item in meeting_data if item['status'] == 'active' and
+                    dt.now() < item['meeting_end_dateTime']]
     if True in check_status:
         return "disallow"
     return "allow"
@@ -157,7 +156,7 @@ Class Details:
         - Scheduled Start Date and Time: {email_data['start_class']}
         - Duration: {sec_to_time_format(email_data['duration'])} hour(s)
         - Class ID: {email_data['meeting_id']}
-        - Join iSTREAM Class: http://127.0.0.1:15000/join_meeting/v/user_verify?mid={email_data['meeting_id']}
+        - Join iSTREAM Class: http://127.0.0.1:18000/join_meeting/v/user_verify?mid={email_data['meeting_id']}
 
 NB: Please don't share your meeting OTP (One-Time Password) with anyone.
 Class OTP: {email_data['otp']}

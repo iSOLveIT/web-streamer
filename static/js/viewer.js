@@ -260,7 +260,7 @@ window.onload = function () {
 var isMobile = /iPhone|iPad|iPod|Android/.test(navigator.userAgent);
 var desktop_iframe = document.querySelector('.desktop-iframe');
 var mobile_iframe = document.querySelector('.mobile-iframe');
-var add_iframe = `<iframe src="http://localhost:5080/LiveApp/play.html?id=${STREAM_ID}" allowfullscreen></iframe>`
+var add_iframe = `<iframe title="Video received" src="http://localhost:5080/LiveApp/play.html?id=${STREAM_ID}" allowfullscreen></iframe>`
 
 if (isMobile == true) {
     desktop_iframe.innerHTML = "";

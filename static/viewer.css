@@ -1,5 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Karla:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@import url('/static/subfunctions.css');
+@import url('./karla.css');
+@import url('./subfunctions.css');
+
 :root {
 	font-size: calc(1vw + 1vh + .5vmin) !important;
 	--primary-color: #003;
@@ -159,15 +160,6 @@ section.desktop{
 	margin-bottom: 0;
 }
 
-/* .chats_feature .card-header span{
-	flex-direction: column;
-	align-items: center;
-	color: #fff;
-    font-size: 13pt;
-	border: 0;
-	background-color: transparent;
-} */
-
 .chat-space{
 	overflow-y: auto;
 	background-color: transparent;
@@ -183,19 +175,16 @@ section.desktop{
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	justify-content: space-around;
-    height: 60px;
+	justify-content: space-between;
+    height: 50px;
 }
-.chat-form input{
-	flex-direction: column;
-	align-items: center;
+.chat-form input[type="text"]{
 	color: var(--primary-color) !important;
     font-size: 12pt;
-	width: 80%;
 	font-weight: 700;
 	border: 2px solid var(--primary-color);
 }
-.chat-form input:focus{
+.chat-form input[type="text"]:focus{
 	border: 2px solid var(--secondary-color);
 }
 
@@ -206,8 +195,47 @@ section.desktop{
 	border: 0;
 	border-radius: 50%;
 	background-color: #fff;
-	width: 35px;
+	width: 40px;
 	height: 35px;
+}
+.input-group-text {
+    padding: 0 8px !important;
+    font-size: 1rem;
+    font-weight: 300;
+	background-color: #fff !important;
+    border: 2px solid var(--primary-color) !important;
+}
+.form-check-input {
+	background-color: transparent !important;
+	color: #f1890085 !important;
+    width: 1em !important;
+    margin-top: 0!important;
+	border: none !important;
+	font-size: 20pt;
+}
+.form-check-input:checked{
+	color: var(--primary-color) !important;
+}
+.form-check-input:focus {
+    border-color: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+.form-check-input:checked {
+    background-color: transparent !important;
+    border-color: transparent !important;
+}
+.input-group > .inputMessage{
+    position: relative;
+    width: 80% !important;
+    flex: none !important;
+    min-width: 0;
+}
+.form-check-input:checked[type="checkbox"] {
+    background-image: none !important;
+}
+.form-control:focus{
+	box-shadow: none !important;
 }
 
 .host-message{
@@ -379,20 +407,21 @@ iframe{
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	justify-content: space-around;
+	justify-content: space-between;
     height: 60px;
 	border-top: 1px solid #ffffff;
+	padding: 0 5px;
 }
-.chat-form input{
+
+.chat-form input[type="text"]{
 	flex-direction: column;
 	align-items: center;
 	color: var(--primary-color) !important;
     font-size: 12pt;
-	width: 80%;
 	font-weight: 700;
 	border: 2px solid var(--primary-color);
 }
-.chat-form input:focus{
+.chat-form input[type="text"]:focus{
 	border: 2px solid var(--secondary-color);
 }
 
@@ -403,8 +432,47 @@ iframe{
 	border: 0;
 	border-radius: 50%;
 	background-color: #fff;
-	width: 30px;
+	width: 35px;
 	height: 30px;
+}
+.input-group-text {
+    background-color: #fff !important;
+    padding: 0 8px !important;
+    font-size: 1rem;
+    font-weight: 300;
+    border: 2px solid var(--primary-color) !important;
+}
+.form-check-input {
+	background-color: transparent !important;
+	color: #f1890085 !important;
+    width: 1em !important;
+    margin-top: 0!important;
+	border: none !important;
+	font-size: 20pt;
+}
+.form-check-input:checked{
+	color: var(--primary-color) !important;
+}
+.form-check-input:focus {
+    border-color: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+.form-check-input:checked {
+    background-color: transparent !important;
+    border-color: transparent !important;
+}
+.input-group > .inputMessage{
+    position: relative;
+    width: 80% !important;
+    flex: none !important;
+    min-width: 0;
+}
+.form-check-input:checked[type="checkbox"] {
+    background-image: none !important;
+}
+.form-control:focus{
+	box-shadow: none !important;
 }
 
 .host-message{

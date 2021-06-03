@@ -1,5 +1,4 @@
 from datetime import datetime as dt
-from datetime import timedelta
 
 from flask import flash, redirect, request, session, url_for
 from flask_socketio import close_room, emit, join_room, leave_room
@@ -78,8 +77,9 @@ def on_close(data):
     if user_id == "Host":
         session.pop('OTP', None)
         emit('class_end', to=room_id, include_self=False, namespace='/meeting')  # Handles redirecting students
-        close_room(room_id)
         disconnect_students(room_id=room_id)  # disconnect all users
+        leave_room(room_id)
+        close_room(room_id)
 
 
 # Client Disconnected
@@ -88,6 +88,7 @@ def test_disconnect():
     # User leaving by closing browser tab or refreshing.
     left_at = dt.now().strftime("%Y-%m-%d %H:%M")
     meeting_collection = mongo.get_collection("meetings")
+    # if a user leaves class
     meeting_data = meeting_collection.find_one_and_update(
         {f"attendance_records.{request.sid}": {"$exists": 1}},  # the $exists operator checks for existence
         {"$set": {
@@ -96,29 +97,29 @@ def test_disconnect():
         }},
         {"meeting_id": 1, f"attendance_records.{request.sid}": 1,
          "status": 1, "meeting_start_dateTime": 1,
-         "meeting_duration": 1},
+         "meeting_end_dateTime": 1},
         return_document=ReturnDocument.AFTER
     )
+
     room_id = meeting_data["meeting_id"]
     user_id = meeting_data["attendance_records"][f"{request.sid}"][0]
     message = f"{user_id}"
     emit('remove_member', message, to=room_id, include_self=False, namespace='/meeting')
 
     if user_id == "Host":
-        duration = meeting_data["meeting_duration"]
         start_datetime = meeting_data["meeting_start_dateTime"]
-        end_datetime = start_datetime + timedelta(seconds=duration)
+        end_datetime = meeting_data['meeting_end_dateTime']
 
         # If meeting time is not up but host exits meeting due to network failures or computer issues
         # Disconnect everyone and allow them to rejoin again
-        if start_datetime <= (time_stopped := dt.now()) < end_datetime:
-            duration_remaining = duration - (time_stopped - start_datetime).seconds
+        if start_datetime <= dt.now() < end_datetime:
+            duration_remaining = (end_datetime - dt.now()).seconds
             meeting_collection.find_one_and_update({"meeting_id": room_id},
                                                    {"$set": {"duration_left": duration_remaining,
                                                              "status": "pending", "is_verified": False}})
             emit('class_end', to=room_id, include_self=False, namespace='/meeting')     # Handles redirecting students
-            close_room(room_id)
             disconnect_students(room_id=room_id)  # disconnect all users
+            close_room(room_id)
             flash(message="Class ended before time. Please restart the class if you are the Host.", category="notice")
             return redirect(url_for('all_verification', loader="host_verify"))
 
@@ -126,8 +127,8 @@ def test_disconnect():
                                                {"$set": {"status": "expired", "duration_left": 0}})
 
         emit('class_end', to=room_id, include_self=False, namespace='/meeting')     # Handles redirecting students
-        close_room(room_id)
         disconnect_students(room_id=room_id)  # disconnect all users
+        close_room(room_id)
         flash(message="Class has ended.", category="notice")
         return redirect(url_for('index'))
 

@@ -23,15 +23,7 @@ socket.on('add_member', data => {
   // Add participant name and increase count as they join
   let users_counts = document.querySelectorAll(".users_counts");
   let member_spaces = document.querySelectorAll(".member-space");
-  // let old_member_spaces = document.querySelectorAll(".member-space p, .member-space hr");
-
-  // // Remove the participant id if they exist to prevent duplicates
-  // for (member=0; member<old_member_spaces.length; member++){
-  //   if (old_member_spaces[member].textContent == `${data}`){
-  //     old_member_spaces[member].remove();
-  //     old_member_spaces[parseInt(member+1)].remove();
-  //   }
-  // }
+ 
   // Add the participant id
   member_spaces[0].innerHTML += add_member_desktop(data);
   member_spaces[1].innerHTML += add_member_mobile(data);
@@ -115,7 +107,12 @@ socket.on('room_notice', data => {
     item.style.display = "block";
   }
 });
-
+ 
+// CHAT RINGTONE
+function ringtone(){
+  const CHAT_RINGTONE = document.getElementById("ringtone");
+  CHAT_RINGTONE.play();
+}
 
 
 // Room Broadcast
@@ -126,23 +123,43 @@ socket.on('receive_room_message', data => {
     let paragraph = user_msg(data.sender, data.msg, chatSentAt());
     room_box.innerHTML += paragraph;
   })
+  // Play ringtone
+  ringtone();
 });
 
 // Send chats from desktop
 desktopSendBtn.addEventListener('click', function () {
   let roomMsgBox = document.querySelectorAll(".chat-space");
   let msg = document.querySelector('.desktop_msg_area').value;
-  let isEmpty = /^[\n\t\ ]*?$/.test(msg)
+  let isEmpty = /^[\n\t\ ]*?$/.test(msg);
+  let isQuestion = document.getElementById("desktop_question_check");
+
   if (isEmpty != true){
-    // Add message to msg_board
-    roomMsgBox.forEach(function(room_box){
-      let paragraph = host_msg(USERNAME, msg, chatSentAt());
-      room_box.innerHTML += paragraph;
-    })
-    // send message to room
-    broadcast_msg(msg);
-    // Clear text area
-    document.querySelector('.desktop_msg_area').value = "";
+    // Check if is question checkbox is checked
+    if (isQuestion != null && isQuestion.checked == true){
+      msg = `✋ ${msg}`;
+      // Add message to msg_board
+      roomMsgBox.forEach(function(room_box){
+        let paragraph = host_msg(USERNAME, msg, chatSentAt());
+        room_box.innerHTML += paragraph;
+      })
+      // send message to room
+      broadcast_msg(msg);
+      // Clear text area and uncheck question check
+      document.querySelector('.desktop_msg_area').value = "";
+      document.getElementById("desktop_question_check").checked = false;
+    }
+    else{
+      // Add message to msg_board
+      roomMsgBox.forEach(function(room_box){
+        let paragraph = host_msg(USERNAME, msg, chatSentAt());
+        room_box.innerHTML += paragraph;
+      })
+      // send message to room
+      broadcast_msg(msg);
+      // Clear text area
+      document.querySelector('.desktop_msg_area').value = "";
+    }
   }
 })
 
@@ -150,23 +167,47 @@ desktopSendBtn.addEventListener('click', function () {
 mobileSendBtn.addEventListener('click', function () {
   let roomMsgBox = document.querySelectorAll(".chat-space"); 
   let msg = document.querySelector('.mobile_msg_area').value;
-  let isEmpty = /^[\n\t\ ]*?$/.test(msg)
+  let isEmpty = /^[\n\t\ ]*?$/.test(msg);
+  let isQuestion = document.getElementById("mobile_question_check");
+
   if (isEmpty != true){
-    // Add message to msg_board
-    roomMsgBox.forEach(function(room_box){
-      let paragraph = host_msg(USERNAME, msg, chatSentAt());
-      room_box.innerHTML += paragraph;
-    })
-    // send message to room
-    broadcast_msg(msg);
-    // Clear text area
-    document.querySelector('.mobile_msg_area').value = "";
+    // Check if is question checkbox is checked
+    if (isQuestion != null && isQuestion.checked == true){
+      msg = `✋ ${msg}`;
+      // Add message to msg_board
+      roomMsgBox.forEach(function(room_box){
+        let paragraph = host_msg(USERNAME, msg, chatSentAt());
+        room_box.innerHTML += paragraph;
+      })
+      // send message to room
+      broadcast_msg(msg);
+      // Clear text area and uncheck question check
+      document.querySelector('.mobile_msg_area').value = "";
+      document.getElementById("mobile_question_check").checked = false;
+    }
+    else{
+      // Add message to msg_board
+      roomMsgBox.forEach(function(room_box){
+        let paragraph = host_msg(USERNAME, msg, chatSentAt());
+        room_box.innerHTML += paragraph;
+      })
+      // send message to room
+      broadcast_msg(msg);
+      // Clear text area
+      document.querySelector('.mobile_msg_area').value = "";
+    }
   }
 })
+
 /* Route for leaving class */
 
 // Tasks to perform on student leaving class
 var student_leave = function(){
+
+  window.localStorage.setItem("v_hours", 0);
+  window.localStorage.setItem("v_seconds", 0);
+  window.localStorage.setItem("v_minutes", 0);
+  
   window.localStorage.removeItem("v_hours");
   window.localStorage.removeItem("v_seconds");
   window.localStorage.removeItem("v_minutes");
@@ -179,12 +220,15 @@ var student_leave = function(){
 var host_leave = function(){
   socket.emit('notice', { room_id: ROOM_ID, msg: "Class ended by Host"});
 
+  window.localStorage.setItem("s_hours", 0);
+  window.localStorage.setItem("s_seconds", 0);
+  window.localStorage.setItem("s_minutes", 0);
+
   window.localStorage.removeItem("s_hours");
   window.localStorage.removeItem("s_seconds");
   window.localStorage.removeItem("s_minutes");
 
   close_room();
-  leave_room();
   window.location.replace(`/attendance_report/${ROOM_ID}`);
 }
 
@@ -253,6 +297,7 @@ function chatSentAt() {
     return result
 }
 
+// 0 0 1 */3 * // Certboot cert renew
 // window.addEventListener('beforeunload', () => {
 //   var formData = new FormData();
 //   formData.append('room_id', ROOM_ID);
