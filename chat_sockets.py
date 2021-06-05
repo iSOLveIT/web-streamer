@@ -4,7 +4,7 @@ from flask import flash, redirect, request, session, url_for
 from flask_socketio import close_room, emit, join_room, leave_room
 from pymongo import ReturnDocument
 
-from project import mongo, socket_io
+from project import mongo, socket_io, gh
 from project.sub_functions import disconnect_students, user_management
 
 
@@ -50,6 +50,17 @@ def on_join(data):
     emit('add_member', message, to=room_id, include_self=False, namespace='/meeting')
 
 
+# Join Waiting Room
+# @socket_io.on('waiting-room', namespace='/meeting')
+# def on_waiting(data):
+#     room_id = data['room_id']
+#     user_id = data['user_id']
+#
+#     join_room(room_id)
+#     if user_id == "Host":
+#         emit('host_joined', {'result': "yes"}, to=room_id, include_self=False, namespace='/meeting')
+#
+
 # Leave room
 @socket_io.on('leave-room', namespace='/meeting')
 def on_leave(data):
@@ -60,7 +71,8 @@ def on_leave(data):
     meeting_collection.find_one_and_update({"meeting_id": room_id},
                                            {"$set": {
                                                f"attendance_records.{request.sid}.1": "left",
-                                               f"attendance_records.{request.sid}.3": dt.now().strftime("%Y-%m-%d %H:%M")}})
+                                               f"attendance_records.{request.sid}.3": dt.now(tz=gh).strftime(
+                                                   "%Y-%m-%d %H:%M")}})
 
     message = f"{user_id}"
     leave_room(room_id)
@@ -86,7 +98,7 @@ def on_close(data):
 @socket_io.on('disconnect', namespace='/meeting')
 def test_disconnect():
     # User leaving by closing browser tab or refreshing.
-    left_at = dt.now().strftime("%Y-%m-%d %H:%M")
+    left_at = dt.now(tz=gh).strftime("%Y-%m-%d %H:%M")
     meeting_collection = mongo.get_collection("meetings")
     # if a user leaves class
     meeting_data = meeting_collection.find_one_and_update(
@@ -96,7 +108,7 @@ def test_disconnect():
             f"attendance_records.{request.sid}.3": left_at
         }},
         {"meeting_id": 1, f"attendance_records.{request.sid}": 1,
-         "status": 1, "meeting_start_dateTime": 1,
+         "status": 1, "meeting_start_dateTime": 1, "stream_id": 1,
          "meeting_end_dateTime": 1},
         return_document=ReturnDocument.AFTER
     )
@@ -107,30 +119,28 @@ def test_disconnect():
     emit('remove_member', message, to=room_id, include_self=False, namespace='/meeting')
 
     if user_id == "Host":
-        start_datetime = meeting_data["meeting_start_dateTime"]
-        end_datetime = meeting_data['meeting_end_dateTime']
+        start_datetime: dt = meeting_data["meeting_start_dateTime"].astimezone(tz=gh)
+        end_datetime: dt = meeting_data['meeting_end_dateTime'].astimezone(tz=gh)
 
         # If meeting time is not up but host exits meeting due to network failures or computer issues
         # Disconnect everyone and allow them to rejoin again
-        if start_datetime <= dt.now() < end_datetime:
-            duration_remaining = (end_datetime - dt.now()).seconds
+        if start_datetime <= dt.now(tz=gh) < end_datetime:
+            duration_remaining = (end_datetime - dt.now(tz=gh)).seconds
             meeting_collection.find_one_and_update({"meeting_id": room_id},
                                                    {"$set": {"duration_left": duration_remaining,
                                                              "status": "pending", "is_verified": False}})
-            emit('class_end', to=room_id, include_self=False, namespace='/meeting')     # Handles redirecting students
+            emit('class_end', to=room_id, include_self=False, namespace='/meeting')  # Handles redirecting students
             disconnect_students(room_id=room_id)  # disconnect all users
             close_room(room_id)
-            flash(message="Class ended before time. Please restart the class if you are the Host.", category="notice")
             return redirect(url_for('all_verification', loader="host_verify"))
 
         meeting_collection.find_one_and_update({"meeting_id": room_id},
                                                {"$set": {"status": "expired", "duration_left": 0}})
 
-        emit('class_end', to=room_id, include_self=False, namespace='/meeting')     # Handles redirecting students
+        emit('class_end', to=room_id, include_self=False, namespace='/meeting')  # Handles redirecting students
         disconnect_students(room_id=room_id)  # disconnect all users
         close_room(room_id)
         flash(message="Class has ended.", category="notice")
         return redirect(url_for('index'))
-
 
 # User leaving by closing browser tab.

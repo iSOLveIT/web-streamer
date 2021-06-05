@@ -15,7 +15,7 @@
 
     <script>
         const ROOM_ID = "{{ room_id }}";    // Class
-        const STREAM_ID = "{{ stream_id }}"; // Stream 
+        const STREAM_ID = "{{ stream_id }}"
 		const USER_ID = "{{ user_id }}";    // Index number
 		const USERNAME = "{{ user_name }}"; // Display name
 		const SECONDS = parseInt("{{seconds}}");
@@ -56,10 +56,11 @@
             <p style="text-transform: capitalize;"><b>Host:</b> {{ meeting_data["instructor"] }}</p>
             <p>
                 <b>Invite Link:</b>
-                <a href="{{ url_for('all_verification', loader='user_verify',  mid=room_id) }}">
+                <a href="{{ url_for('all_verification', loader='user_verify',  mid=room_id) }}"
+                target="_blank" rel="noreferrer">
                     /join_meeting/v/user_verify?mid={{room_id}}</a>
             </p>
-            <p style="text-transform: capitalize;"><b>Student:</b> {{ user_id }}</p>
+            <p style="text-transform: capitalize;"><b>Student:</b> {{ user_name }}</p>
         </div>
 
         <div class="message" style="display: none;"></div>
@@ -106,10 +107,11 @@
             <p style="text-transform: capitalize;"><b>Host:</b> {{ meeting_data["instructor"] }}</p>
             <p>
                 <b>Invite Link:</b>
-                <a href="{{ url_for('all_verification', loader='user_verify',  mid=room_id) }}">
+                <a href="{{ url_for('all_verification', loader='user_verify',  mid=room_id) }}"
+                target="_blank" rel="noreferrer">
                     /join_meeting/v/user_verify?mid={{room_id}}</a>
             </p>
-            <p style="text-transform: capitalize;"><b>Student:</b> {{ user_id }}</p>
+            <p style="text-transform: capitalize;"><b>Student:</b> {{ user_name }}</p>
         </div>
 
         <div class="container app-body">

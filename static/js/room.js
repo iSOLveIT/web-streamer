@@ -84,8 +84,31 @@ socket.on('server_response', data => {
 
 socket.on('class_end', () =>{
     // If host ends class
-    student_leave();
+  window.localStorage.setItem("v_hours", 0);
+  window.localStorage.setItem("v_minutes", 0);
+  window.localStorage.setItem("v_seconds", 0);
+
+  window.localStorage.removeItem("v_hours");
+  window.localStorage.removeItem("v_minutes");
+  window.localStorage.removeItem("v_seconds");
+
+  window.location.replace("/join_meeting/v/user_verify");
 })
+/*
+socket.on('class_wait', data =>{
+  // Redirect participants to restart class page
+  window.localStorage.setItem("v_hours", 0);
+  window.localStorage.setItem("v_minutes", 0);
+  window.localStorage.setItem("v_seconds", 0);
+
+  window.localStorage.removeItem("v_hours");
+  window.localStorage.removeItem("v_minutes");
+  window.localStorage.removeItem("v_seconds");
+
+  let url = `/meeting/class_restart?mid=${data}_${ROOM_ID}&display_name=${USERNAME}&user_id=${USER_ID}`
+
+  window.location.replace(url);
+})*/
 
 socket.on('room_notice', data => {
   let notice = document.querySelectorAll(".message");
@@ -205,12 +228,13 @@ mobileSendBtn.addEventListener('click', function () {
 var student_leave = function(){
 
   window.localStorage.setItem("v_hours", 0);
-  window.localStorage.setItem("v_seconds", 0);
   window.localStorage.setItem("v_minutes", 0);
+  window.localStorage.setItem("v_seconds", 0);
   
   window.localStorage.removeItem("v_hours");
-  window.localStorage.removeItem("v_seconds");
   window.localStorage.removeItem("v_minutes");
+  window.localStorage.removeItem("v_seconds");
+
   
   leave_room();
   window.location.replace("/join_meeting/v/user_verify");
@@ -221,12 +245,12 @@ var host_leave = function(){
   socket.emit('notice', { room_id: ROOM_ID, msg: "Class ended by Host"});
 
   window.localStorage.setItem("s_hours", 0);
-  window.localStorage.setItem("s_seconds", 0);
   window.localStorage.setItem("s_minutes", 0);
+  window.localStorage.setItem("s_seconds", 0);
 
   window.localStorage.removeItem("s_hours");
-  window.localStorage.removeItem("s_seconds");
   window.localStorage.removeItem("s_minutes");
+  window.localStorage.removeItem("s_seconds");
 
   close_room();
   window.location.replace(`/attendance_report/${ROOM_ID}`);
@@ -243,8 +267,7 @@ if (hostDesktopLeaveBtn != null || hostMobileLeaveBtn != null){
   hostMobileLeaveBtn.addEventListener('click', function () {host_leave()});
 }
 
-
-
+// Send messages among participants in a room
 function broadcast_msg(message) {
   socket.emit('send_room_message', { room_id: ROOM_ID, msg: `${message}`, sender: USERNAME});
 }
@@ -252,7 +275,6 @@ function broadcast_msg(message) {
 // Leave Room
 function leave_room() {
   socket.emit('leave-room', { room_id: ROOM_ID, user_id: USER_ID });
-  // window.location.replace("new target URL");
 }
 
 // Close Room

@@ -14,3 +14,4 @@ requests~=2.25.1
 passlib~=1.7.4
 celery==5.1.0
 redis==3.5.3
+tzdata

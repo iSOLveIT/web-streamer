@@ -14,7 +14,7 @@
 
     <script>
         const ROOM_ID = "{{ room_id }}";    // Class
-        const STREAM_ID = "{{ stream_id }}"; // Stream
+        const STREAM_ID = "{{ stream_id }}"
 		const USER_ID = "{{ user_id }}";    // Index number
 		const USERNAME = "{{ user_name }}"; // Display name 
 		const SECONDS = parseInt("{{seconds}}");
@@ -23,7 +23,8 @@
 <body>
     <audio id="ringtone" src="{{ url_for('static', filename='sounds/notice_2.mp3') }}"></audio>
     <section class="desktop">
-        <div class="page-terminate text-center">Class is active. Closing or refreshing this page ends the class.</div>
+        <div class="page-terminate text-center">Class is active. Closing or refreshing this page disconnects
+            other participants from the class.</div>
         <nav class="navbar navbar-expand-lg app-nav">
             <div class="container">
                 <button id="meeting_btn">
@@ -50,10 +51,11 @@
         <div class="meeting_details text-break">
             <h5 class="fw-light" style="text-transform: uppercase;">{{ meeting_topic }}</h5>
             <p><b>Class ID:</b> {{ room_id }}</p>
-            <p style="text-transform: capitalize;"><b>Host:</b> {{ user_id }}</p>
+            <p style="text-transform: capitalize;"><b>Host:</b> {{ user_name }}</p>
             <p>
                 <b>Invite Link:</b>
-                <a href="{{ url_for('all_verification', loader='user_verify',  mid=room_id) }}">
+                <a href="{{ url_for('all_verification', loader='user_verify',  mid=room_id) }}"
+                target="_blank" rel="noreferrer">
                     /join_meeting/v/user_verify?mid={{room_id}}</a>
             </p>
         </div>
@@ -92,10 +94,11 @@
         <div class="m_meeting_details text-break">
             <h5 class="fw-bolder fs-4" style="text-transform: uppercase;">{{ meeting_topic }}</h5>
             <p><b>Class ID:</b> {{ room_id }}</p>
-            <p style="text-transform: capitalize;"><b>Host:</b> {{ user_id }}</p>
+            <p style="text-transform: capitalize;"><b>Host:</b> {{ user_name }}</p>
             <p>
                 <b>Invite Link:</b>
-                <a href="{{ url_for('all_verification', loader='user_verify',  mid=room_id) }}">
+                <a href="{{ url_for('all_verification', loader='user_verify',  mid=room_id) }}"
+                   target="_blank" rel="noreferrer">
                     /join_meeting/v/user_verify?mid={{room_id}}</a>
              </p>
         </div>

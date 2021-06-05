@@ -1,3 +1,5 @@
+from zoneinfo import ZoneInfo
+
 from celery import Celery
 from flask import Flask
 from flask_compress import Compress
@@ -52,6 +54,9 @@ application.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'text/javas
 application.config['COMPRESS_BR_LEVEL'] = 5
 
 Compress(application)  # Instantiate Flask Compress into app
+
+# Meeting Timezone
+gh = ZoneInfo("GMT")
 
 
 from project import chat_sockets, error_routes, routes

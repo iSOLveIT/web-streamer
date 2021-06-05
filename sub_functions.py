@@ -1,12 +1,11 @@
 from datetime import datetime as dt
-from datetime import timedelta
 from random import sample
 from string import ascii_letters
 
 from flask_mail import Message
 from pymongo import ReturnDocument
 
-from project import application, celery, mail, mongo
+from project import application, celery, mail, mongo, gh
 
 
 # Combines date and time
@@ -23,17 +22,20 @@ def date_and_time(*, _date, _time, _fmt) -> dt:
     """
     # convert _time from 12 hour to 24 hour based on value for format
     hour_hand, minute_hand = _time.split(":")
-    converted_time = f"{'0' + hour_hand if int(hour_hand) < 10 else hour_hand}:{minute_hand}"
+    converted_time = f"{hour_hand}:{minute_hand}"
     if int(hour_hand) == 12 and _fmt == "am":
-        converted_time = f"00:{minute_hand}"
+        converted_time = f"0:{minute_hand}"
     if (n_hour := int(hour_hand)) < 12 and _fmt == "pm":
         converted_time = f"{int(n_hour + 12)}:{minute_hand}"
 
-    # combine the value for _date and value for converted _time to a datetime iso_format
-    _iso_date_time = f"{_date}T{converted_time}"
-    # create a datetime object using the datetime iso_format (_iso_date_time)
-    _new_date_time = dt.fromisoformat(_iso_date_time)
-    return _new_date_time
+    year, month, day = _date.split("-", maxsplit=3)
+    hour, minute = converted_time.split(":", maxsplit=1)
+
+    # create new datetime object
+    new_date_time = dt(year=int(year), month=int(month), day=int(day),
+                       hour=int(hour), minute=int(minute), tzinfo=gh)
+
+    return new_date_time
 
 
 # Convert seconds to hours and minutes
@@ -57,10 +59,10 @@ def generate_meeting_details(*, meeting_data):
 Class Details:
     - Instructor: {meeting_data['user']}
     - Topic: {meeting_data['topic']}
-    - Scheduled Start Date and Time: {meeting_data['start_class']}
+    - Scheduled Start Date and Time: {meeting_data['start_class']} GMT
     - Duration: {sec_to_time_format(meeting_data['duration'])} hour(s)
     - Class ID: {meeting_data['meeting_id']}
-    - Join iSTREAM Class: http://127.0.0.1:18000/join_meeting/v/user_verify?mid={meeting_data['meeting_id']}
+    - Join iSTREAM Class: http://127.0.0.1:17000/join_meeting/v/user_verify?mid={meeting_data['meeting_id']}
 
 NOTE: We emailed access code for starting class (Class OTP) to the email address provided.
 Thank you.
@@ -77,6 +79,7 @@ def disconnect_students(*, room_id):
     if len(records) != 0:
         for r_key, r_value in records.items():
             r_value[1] = "left"
+            r_value[3] = dt.now(tz=gh).strftime("%Y-%m-%d %H:%M")
             records[f"{r_key}"] = r_value
         meeting_collection.find_one_and_update({"meeting_id": room_id},
                                                {"$set": {"attendance_records": records}})
@@ -108,8 +111,8 @@ def user_management(*, client_id, room_id, user_name, user_id):
                 return [user[0] for user in members['attendance_records'].values() if user[1] == "joined"]
     # Add user if no record exist
     # user_records = [user_id, meeting_status, time_joined, time_left, name]
-    user_data = [user_id, "joined", dt.now().strftime("%Y-%m-%d %H:%M"),
-                 dt.now().strftime("%Y-%m-%d %H:%M"), user_name]
+    user_data = [user_id, "joined", dt.now(tz=gh).strftime("%Y-%m-%d %H:%M"),
+                 dt.now(tz=gh).strftime("%Y-%m-%d %H:%M"), user_name]
     records.update([(client_id, user_data)])
     members = meeting_collection.find_one_and_update({"meeting_id": room_id},
                                                      {"$set": {"attendance_records": records}},
@@ -136,8 +139,9 @@ def disallow_host(*, host_ip):
     meeting_collection = mongo.get_collection("meetings")
     meeting_data = meeting_collection.find({"host_ip": host_ip},
                                            {"status": 1, "meeting_end_dateTime": 1, "_id": 0})
+
     check_status = [True for item in meeting_data if item['status'] == 'active' and
-                    dt.now() < item['meeting_end_dateTime']]
+                    dt.now(tz=gh) < item['meeting_end_dateTime'].astimezone(tz=gh)]
     if True in check_status:
         return "disallow"
     return "allow"
@@ -153,10 +157,10 @@ def send_meeting_details_task(email_data):
 Class Details:
         - Instructor: {email_data['user']}
         - Topic: {email_data['topic']}
-        - Scheduled Start Date and Time: {email_data['start_class']}
+        - Scheduled Start Date and Time: {email_data['start_class']} GMT
         - Duration: {sec_to_time_format(email_data['duration'])} hour(s)
         - Class ID: {email_data['meeting_id']}
-        - Join iSTREAM Class: http://127.0.0.1:18000/join_meeting/v/user_verify?mid={email_data['meeting_id']}
+        - Join iSTREAM Class: http://127.0.0.1:17000/join_meeting/v/user_verify?mid={email_data['meeting_id']}
 
 NB: Please don't share your meeting OTP (One-Time Password) with anyone.
 Class OTP: {email_data['otp']}
@@ -179,7 +183,7 @@ Best Regards,
 {email_data['user'].title()}
 
 Sender's Email: {email_data['email']}
-Sent at: {dt.now().strftime("%A, %d %B, %Y %I:%M %p")}
+Sent at: {dt.now(tz=gh).strftime("%A, %d %B, %Y %I:%M %p")} GMT
 '''
     with application.app_context():
         mail.send(msg)

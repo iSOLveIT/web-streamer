@@ -7,7 +7,7 @@ from flask import flash, redirect, render_template, request, session, url_for, a
 from flask_weasyprint import render_pdf
 from passlib.hash import oracle10
 
-from project import application, mongo
+from project import application, mongo, gh
 from project.sub_functions import (contact_us_task, date_and_time, disallow_host, disallow_join,
                                    generate_meeting_details, random_str_generator, send_meeting_details_task)
 
@@ -52,12 +52,15 @@ def index():
             m_minute = request.form.get('minute_hand', type=int)
             time_fmt = request.form.get('prompt')
             # Duration
-            d_hour = int(request.form.get("mDuration"))
-            m_duration = timedelta(hours=d_hour).seconds
+            m_duration = request.form.get("mDuration")
 
+            # Sanitize input received
             check_email = re.search(r"^([\w\d\-.]+?)@([a-z]+?).(com|org|net|edu)(.[a-zA-Z]{2})??$", m_email)
             inputs_box = [check_email, re.search(r"^(\d{4})-(\d{2})-(\d{2})$", m_date),
-                          m_hour, m_minute, re.search(r"(am|pm)", time_fmt)]
+                          m_hour, m_minute, re.search(r"(am|pm)", time_fmt), re.search(r"^[1-3]$", m_duration)]
+
+            d_hour = int(m_duration)
+            m_duration = timedelta(hours=d_hour).seconds
 
             if None in inputs_box or m_duration > 10800:
                 flash(message="Please check your inputs and resubmit", category="danger")
@@ -120,7 +123,7 @@ def host_auth():
         return redirect(url_for("all_verification", loader="host_verify"))
 
     otp = request.form.get("meetingOTP")
-    result = re.search(r"^[a-zA-Z0-9]{4}$", otp)
+    result = re.search(r"^[a-zA-Z0-9]{4}$", otp)    # Sanitize input
     if otp is None or result is None:
         flash(message="Please check input and try again", category="normal")
         return redirect(url_for("all_verification", loader="host_verify"))
@@ -153,15 +156,16 @@ def studio(_cid):
     ip_address = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     stream_id, meeting_id = _cid[:5], _cid[5:]
     meeting_collection = mongo.get_collection("meetings")
-    meeting_data = meeting_collection.find_one({'meeting_id': meeting_id},
+    meeting_data = meeting_collection.find_one({'stream_id': stream_id},
                                                {'status': 1, 'is_verified': 1, 'OTP': 1, 'instructor': 1,
                                                 'meeting_start_dateTime': 1, 'meeting_end_dateTime': 1,
                                                 "meeting_topic": 1})
     # Calculate class end date and duration left
-    meeting_end_date = meeting_data['meeting_end_dateTime']
-    seconds_left = (meeting_end_date - dt.now()).seconds
+    meeting_start_date:dt = meeting_data['meeting_start_dateTime'].astimezone(tz=gh)
+    meeting_end_date: dt = meeting_data['meeting_end_dateTime'].astimezone(tz=gh)
+    seconds_left = (meeting_end_date - dt.now(tz=gh)).seconds
     check_otp = oracle10.verify(meeting_data['OTP'], session.get("OTP"), user='isolveit')
-    permit_starting_class = [True if meeting_data['meeting_start_dateTime'] <= dt.now() < meeting_end_date else False]
+    permit_starting_class = [True if meeting_start_date <= dt.now(tz=gh) < meeting_end_date else False]
 
     # Check if meeting time is up and otp is verified before redirecting
     if permit_starting_class[0] and check_otp is True:
@@ -192,7 +196,7 @@ def search_attendance_report():
 
     if request.method == "POST":
         search_term = request.form.get("search_term")
-        result = re.search(r"^[a-zA-Z0-9]{4}$", search_term)
+        result = re.search(r"^[a-zA-Z0-9]{4}$", search_term)    # Sanitize input
         if search_term is None or result is None:
             return render_template('attendance.html')
         meeting_data = meeting_collection.find_one({"$and": [{'OTP': search_term}, {'status': 'expired'}]},
@@ -226,7 +230,7 @@ def attendance_report(_mid):
 
 # Route to print attendance report
 @application.route('/print_report/<string:_mid>_<string:_current>.pdf',
-                   defaults={'_current': dt.now().strftime('%Y%m%d%H%M')})
+                   defaults={'_current': dt.now(tz=gh).strftime('%Y%m%d%H%M')})
 def print_report_pdf(_mid, _current):
     # Make a PDF from another view using pdf generate task
     return render_pdf(url_for('attendance_report', _mid=_mid))
@@ -240,7 +244,6 @@ def all_verification(loader):
     meeting_id = request.args.get('mid')
     if result is None:
         abort(404)
-        # return redirect(url_for('index')), 301
     if meeting_id is None:
         return render_template('verification.html', load=loader)
     return render_template('verification.html', load=loader, meeting_id=meeting_id)
@@ -271,16 +274,18 @@ def contact():
 @application.route('/user/authentication', methods=["POST"])
 def user_attendance():
     meeting_id = request.form.get("mid")
-    display_name = request.form.get("display_name")
+    display_name = request.form.get("display_name", default="")
     user_id: str = request.form.get("user_id", default="")
     result = user_id.isdigit()
 
-    meeting_collection = mongo.get_collection("meetings")
-    check_meeting_id = re.search("^[a-zA-Z0-9]{5}$", meeting_id)
-    check_user_name = re.search("^10[0-9]{6}$", user_id)
-    check_list = [check_meeting_id, check_user_name]
+    # Sanitize input
+    check_meeting_id = re.search(r"^[a-zA-Z0-9]{5}$", meeting_id)
+    check_display_name = re.search(r"^[\w\d\-. ]{2,20}$", display_name)
+    check_user_name = re.search(r"^10[0-9]{6}$", user_id)
+    check_list = [check_meeting_id, check_user_name, check_display_name]
 
     if None not in check_list and result:
+        meeting_collection = mongo.get_collection("meetings")
         meeting_exist = meeting_collection.find_one({"meeting_id": meeting_id}, {"stream_id": 1, "status": 1})
         if meeting_exist is not None:
             if meeting_exist["status"] == "active":
@@ -324,11 +329,24 @@ def viewer(uid: str, _cid):
         return redirect(url_for("all_verification", loader="user_verify", mid=meeting_id)), 301
 
     meeting_collection = mongo.get_collection("meetings")
-    meeting_data = meeting_collection.find_one({"meeting_id": meeting_id},
+    meeting_data = meeting_collection.find_one({"stream_id": stream_id},
                                                {"instructor": 1, "meeting_topic": 1,
-                                                "meeting_start_dateTime": 1, "meeting_end_dateTime": 1, "_id": 0})
+                                                "meeting_end_dateTime": 1, "_id": 0})
     # Calculate duration left before meeting ends
-    seconds_left = (meeting_data['meeting_end_dateTime'] - dt.now()).seconds
+    meeting_end_date: dt = meeting_data['meeting_end_dateTime'].astimezone(tz=gh)
+    seconds_left = (meeting_end_date - dt.now(tz=gh)).seconds
     flash(message=f"Welcome {display_name} to the iSTREAM class.", category="notice")
     return render_template('viewer.html', stream_id=stream_id, room_id=meeting_id, seconds=seconds_left,
                            user_id=user_id, user_name=display_name, meeting_data=meeting_data)
+
+
+# # Route for participants to wait for host to restart class
+# @application.route('/meeting/class_restart')
+# def class_restart():
+#     # If host disconnects class before time is up
+#     # We can let participants wait for class to be restarted then
+#     # reconnect them automatically
+#     meeting_id = request.args.get("mid")
+#     display_name = request.args.get("display_name")
+#     user_id: str = request.args.get("user_id")
+#     return render_template('class_restart.html', room_id=meeting_id, user_id=user_id, user_name=display_name)

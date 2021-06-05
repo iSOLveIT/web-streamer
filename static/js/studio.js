@@ -196,21 +196,22 @@ function startTimer(duration, display) {
             timer = duration;
             display.textContent = "Time's Up!";
             clearInterval(refresh);  // exit refresh loop
-            window.localStorage.removeItem("s_hours");
-            window.localStorage.removeItem("s_seconds");
-            window.localStorage.removeItem("s_minutes");
 
-            // End class when time is up
-            socket.emit('notice', { room_id: ROOM_ID, msg: "Class ended by Host" });
-            leave_room();
-            close_room();
-            window.location.replace(`/attendance_report/${ROOM_ID}`);
+            host_leave();   // Execute function if class ends
+//            window.localStorage.removeItem("s_hours");
+//            window.localStorage.removeItem("s_minutes");
+//            window.localStorage.removeItem("s_seconds");
+//
+//            // End class when time is up
+//            socket.emit('notice', { room_id: ROOM_ID, msg: "Class ended by Host" });
+//            close_room();
+//            window.location.replace(`/attendance_report/${ROOM_ID}`);
 
 
         }
         window.localStorage.setItem("s_hours", hours);
-        window.localStorage.setItem("s_seconds", seconds);
         window.localStorage.setItem("s_minutes", minutes);
+        window.localStorage.setItem("s_seconds", seconds);
 
     }, 1000);
 

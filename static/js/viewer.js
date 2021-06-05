@@ -219,13 +219,15 @@ function startTimer(duration, display) {
             timer = duration;
             display.textContent = "Time's Up!";
             clearInterval(refresh);  // exit refresh loop
-            window.localStorage.removeItem("v_hours");
-            window.localStorage.removeItem("v_seconds");
-            window.localStorage.removeItem("v_minutes");
 
-            // Leave meeting when time is up
-            leave_room();
-            window.location.replace("/join_meeting/v/user_verify");
+            student_leave();    // Execute function if class ends
+//            window.localStorage.removeItem("v_hours");
+//            window.localStorage.removeItem("v_seconds");
+//            window.localStorage.removeItem("v_minutes");
+//
+//            // Leave meeting when time is up
+//            leave_room();
+//            window.location.replace("/join_meeting/v/user_verify");
 
         }
         window.localStorage.setItem("v_hours", hours);
