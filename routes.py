@@ -161,10 +161,10 @@ def studio(_cid):
                                                 'meeting_start_dateTime': 1, 'meeting_end_dateTime': 1,
                                                 "meeting_topic": 1})
     # Calculate class end date and duration left
-    meeting_start_date:dt = meeting_data['meeting_start_dateTime'].astimezone(tz=gh)
+    meeting_start_date: dt = meeting_data['meeting_start_dateTime'].astimezone(tz=gh)
     meeting_end_date: dt = meeting_data['meeting_end_dateTime'].astimezone(tz=gh)
     seconds_left = (meeting_end_date - dt.now(tz=gh)).seconds
-    check_otp = oracle10.verify(meeting_data['OTP'], session.get("OTP"), user='isolveit')
+    check_otp = oracle10.verify(meeting_data['OTP'], session.get("OTP", ""), user='isolveit')
     permit_starting_class = [True if meeting_start_date <= dt.now(tz=gh) < meeting_end_date else False]
 
     # Check if meeting time is up and otp is verified before redirecting
@@ -323,7 +323,7 @@ def viewer(uid: str, _cid):
     stream_id, meeting_id = _cid[:5], _cid[5:]
     user_id, display_name = uid.split('_')
 
-    check_username = oracle10.verify(user_id, session.get("USER_ID"), user='isolveit')
+    check_username = oracle10.verify(user_id, session.get("USER_ID", ""), user='isolveit')
     if check_username is False:
         flash(message="Incorrect user details. Please try again", category="normal")
         return redirect(url_for("all_verification", loader="user_verify", mid=meeting_id)), 301

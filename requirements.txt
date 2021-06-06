@@ -4,9 +4,10 @@ Flask-Mail==0.9.1
 Flask-SocketIO==5.1.0
 Flask-WeasyPrint==0.6
 Flask-Compress
-eventlet
-gevent
-gevent-websocket
+Flask-Session
+eventlet==0.30.2
+pathlib
+python-dotenv
 gunicorn
 pymongo~=3.11.4
 dnspython

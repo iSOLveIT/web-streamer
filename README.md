@@ -4,4 +4,5 @@
 
 Celery Worker command = celery -A project.celery worker --loglevel=info
 Redis Server = redis-server
-gunicorn --threads 50 app:application
+GUnicorn =  gunicorn -w 1 -k eventlet --reload -b 127.0.0.1:8000 app:application
+
