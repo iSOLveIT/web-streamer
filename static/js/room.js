@@ -92,7 +92,27 @@ socket.on('class_end', () =>{
   window.localStorage.removeItem("v_minutes");
   window.localStorage.removeItem("v_seconds");
 
-  window.location.replace("/join_meeting/v/user_verify");
+  let notice = document.querySelectorAll(".message");
+  if (isMobile==true){
+    let item = notice[1];
+    item.innerHTML = data;
+    item.classList.add('info-notice');
+    item.classList.remove('message');
+    item.style.display = "block";
+    setTimeout(function() {
+        window.location.replace("/join_meeting/v/user_verify");
+    }, 3000);
+  }
+  else{
+    let item = notice[0];
+    item.innerHTML = data;
+    item.classList.add('info-notice');
+    item.classList.remove('message');
+    item.style.display = "block";
+    setTimeout(function() {
+        window.location.replace("/join_meeting/v/user_verify");
+    }, 3000);
+  }
 })
 /*
 socket.on('class_wait', data =>{
@@ -163,7 +183,7 @@ desktopSendBtn.addEventListener('click', function () {
       msg = `✋ ${msg}`;
       // Add message to msg_board
       roomMsgBox.forEach(function(room_box){
-        let paragraph = host_msg(USERNAME, msg, chatSentAt());
+        let paragraph = host_msg(msg, chatSentAt());
         room_box.innerHTML += paragraph;
       })
       // send message to room
@@ -175,7 +195,7 @@ desktopSendBtn.addEventListener('click', function () {
     else{
       // Add message to msg_board
       roomMsgBox.forEach(function(room_box){
-        let paragraph = host_msg(USERNAME, msg, chatSentAt());
+        let paragraph = host_msg(msg, chatSentAt());
         room_box.innerHTML += paragraph;
       })
       // send message to room
@@ -199,7 +219,7 @@ mobileSendBtn.addEventListener('click', function () {
       msg = `✋ ${msg}`;
       // Add message to msg_board
       roomMsgBox.forEach(function(room_box){
-        let paragraph = host_msg(USERNAME, msg, chatSentAt());
+        let paragraph = host_msg(msg, chatSentAt());
         room_box.innerHTML += paragraph;
       })
       // send message to room
@@ -211,7 +231,7 @@ mobileSendBtn.addEventListener('click', function () {
     else{
       // Add message to msg_board
       roomMsgBox.forEach(function(room_box){
-        let paragraph = host_msg(USERNAME, msg, chatSentAt());
+        let paragraph = host_msg(msg, chatSentAt());
         room_box.innerHTML += paragraph;
       })
       // send message to room
@@ -282,8 +302,8 @@ function close_room() {
   socket.emit('close-room', { room_id: ROOM_ID, user_id: USER_ID });
 }
 
-function host_msg(sender, message, time_sent) {
-  return `<p class="fw-normal p-2 host-message mt-2"> <b>${sender}</b> @ <em>${time_sent}</em><br>${message}</p>`
+function host_msg(message, time_sent) {
+  return `<p class="fw-normal p-2 host-message mt-2"> <b>You</b> @ <em>${time_sent}</em><br>${message}</p>`
 }
 
 function user_msg(sender, message, time_sent) {

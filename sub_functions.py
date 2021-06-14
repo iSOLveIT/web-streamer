@@ -76,11 +76,13 @@ def disconnect_students(*, room_id):
     meeting_collection = mongo.get_collection("meetings")
     meeting_data = meeting_collection.find_one({"meeting_id": room_id}, {"attendance_records": 1, "_id": 0})
     records: dict = meeting_data['attendance_records']
+
     if len(records) != 0:
         for r_key, r_value in records.items():
-            r_value[1] = "left"
-            r_value[3] = dt.now(tz=gh).strftime("%Y-%m-%d %H:%M")
-            records[f"{r_key}"] = r_value
+            if r_value[1] == "joined":
+                r_value[1] = "left"
+                r_value[3] = dt.now(tz=gh).strftime("%Y-%m-%d %H:%M")
+                records[f"{r_key}"] = r_value
         meeting_collection.find_one_and_update({"meeting_id": room_id},
                                                {"$set": {"attendance_records": records}})
 
