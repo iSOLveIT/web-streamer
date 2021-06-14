@@ -115,6 +115,7 @@ virtualenv/
 ENV/
 env.bak/
 virtualenv.bak/
+.lib64/
 bin/
 share/
 include/
