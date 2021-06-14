@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, Chrome=1">
+    <meta name="referrer" content="origin-when-cross-origin">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="description" content="iSTREAM is an online lecturing platform, which can be used for video and audio lecturing and chat across mobile and desktop browsers.">
+    <meta name="keywords" content="istream, istream.cam, video conferencing, video conference, online meetings, online class, video lecture, screen share, mobility, mobile collaboration, desktop share, chat room, group messaging, attendance report, meeting monitoring, meeting scheduling">
+    <meta name="copyright" content="Copyright © 2021 | iSTREAM ">
+    <meta name="author" content="iSTREAM">
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://istream.cam/" />
+    <meta property="og:title" content="Online Lecturing, Chat Room, Screen Sharing, Attendance Recording" />
+    <meta property="og:description" content="iSTREAM is an online lecturing platform, which can be used for video and audio lecturing and chat across mobile and desktops browsers." />
+    <meta property="og:site_name" content="iSTREAM" />
+
+    <link rel="canonical" href="/search_attendance_report" />
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='attendance.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='icomoon.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
+
+    <title>Search Attendance | iSTREAM</title>
+</head>
+
+<body>
+
+    <div class="main">
+        <nav class="navbar navbar-expand-lg app-nav">
+            <div class="container">
+                <h2><b><a class="navbar-brand" href="#" style="font-family: 'Satisfy', cursive; letter-spacing: 3px; text-decoration: none; color: #fff; font-size: 24pt;">iSTREAM</a></b></h2>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="icon-menu"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent" style="flex-grow: 0;">
+                    <ul class="navbar-nav nav-menu mr-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Welcome</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/join_meeting/v/host_verify">Host Class</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/join_meeting/v/user_verify">Join Class</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/search_attendance_report">Attendance</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/contact_us">Contact Us</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="mb-2"></div>
+
+        <div class="container" style="max-height: 600px; height: 500px">
+            <div class="row" style="max-height: 100%; color: #fff;">
+                <div class="col-12">
+                    <h1 class="main-title">Search for attendance report</h1>
+                </div>
+                <div class="col-12">
+                    <form action="" method="POST" class="row g-3 gx-1 mb-2">
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="col-md-5">
+                            <input type="text" name="search_term" aria-describedby="searchHelp" autocomplete="off" class="form-control" id="inputOTP" 
+                           minlength="4" maxlength="4" placeholder="Enter class OTP" required>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-stream">Search</button>
+                        </div>
+                    </form>
+                </div>
+                
+                {% if results %}
+                    <h6 class="text-bold">RESULTS</h6>
+                    <a class="col-7 mt-2 report-card rounded-end rounded-3" href="{{ url_for('attendance_report', _mid=results[3]) }}">
+                        <h3>{{ results[0] }}</h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><b>Start:</b> {{ results[1] }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><b>End:</b> {{ results[2] }}</p>
+                            </div>
+                        </div>
+                    </a>
+                {% else %}
+                    <div class="col-12 text-center">
+                        <svg class="no-results" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M307.38 688.768L287.121 668.51L449.214 506.416L469.472 526.675L307.38 688.768Z" fill="#A3B5D6"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M616.481 542.053C515.609 542.053 433.837 460.28 433.837 359.409C433.837 258.538 515.609 176.765 616.481 176.765C717.351 176.765 799.125 258.538 799.125 359.409C799.125 460.28 717.351 542.053 616.481 542.053ZM616.481 115.884C481.985 115.884 372.956 224.913 372.956 359.409C372.956 493.904 481.985 602.934 616.481 602.934C750.976 602.934 860.006 493.904 860.006 359.409C860.006 224.913 750.976 115.884 616.481 115.884Z" fill="#4E5C93"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M487.366 359.408C487.366 288.101 545.173 230.294 616.481 230.294C687.788 230.294 745.595 288.101 745.595 359.408C745.595 430.716 687.788 488.523 616.481 488.523C545.173 488.523 487.366 430.716 487.366 359.408Z" fill="#A3B5D6"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M616.481 431.033C576.922 431.033 544.856 398.966 544.856 359.408C544.856 319.851 576.922 287.783 616.481 287.783C656.039 287.783 688.106 319.851 688.106 359.408C688.106 398.966 656.039 431.033 616.481 431.033Z" fill="#000033"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M228.868 767.279L208.61 747.021C203.016 741.426 203.016 732.356 208.61 726.762L350.936 584.435C356.53 578.841 365.6 578.841 371.195 584.435C371.195 584.435 371.195 584.435 371.195 584.435L391.453 604.694C397.048 610.288 397.048 619.359 391.453 624.953L249.127 767.279C243.533 772.874 234.463 772.874 228.868 767.279C228.868 767.279 228.868 767.279 228.868 767.279Z" fill="#4E5C93"/>
+                        <g opacity="0.15">
+                        <path d="M131.272 268.824C130.404 268.824 129.607 268.347 129.201 267.58C125.157 259.958 123.931 251.165 125.561 241.449C127.105 232.244 131.144 222.595 137.567 212.765C150.621 192.787 172.142 174.175 198.164 160.358C224.186 146.542 251.657 139.146 275.523 139.523C287.262 139.707 297.519 141.767 306.007 145.644C314.971 149.738 321.566 155.678 325.614 163.302C326.22 164.444 325.786 165.861 324.644 166.467C323.502 167.073 322.085 166.638 321.479 165.496C317.926 158.806 312.067 153.559 304.063 149.903C296.165 146.297 286.538 144.379 275.448 144.194C252.363 143.824 225.695 151.045 200.361 164.485C175.026 177.925 154.115 195.998 141.486 215.327C135.419 224.613 131.614 233.66 130.178 242.223C128.721 250.9 129.785 258.693 133.338 265.383C133.723 266.107 133.701 266.979 133.28 267.683C132.86 268.386 132.103 268.819 131.283 268.824H131.272Z" fill="#A3B5D6"/>
+                        <path opacity="0.33" d="M223.724 292.169C269.934 292.169 307.395 254.709 307.395 208.499C307.395 162.289 269.934 124.828 223.724 124.828C177.514 124.828 140.054 162.289 140.054 208.499C140.054 254.709 177.514 292.169 223.724 292.169Z" fill="#253368"/>
+                        <path d="M279.985 228.809C284.912 215.666 287.379 210.736 279.985 208.501C272.591 206.265 261.912 220.593 252.048 213.682C242.183 206.77 255.333 191.843 251.226 183.299C247.118 174.754 242.188 173.77 244.654 157.624C245.905 149.431 253.488 140.355 260.656 133.404C249.171 127.746 236.536 124.812 223.733 124.828C220.389 124.828 217.048 125.026 213.728 125.421C220.667 140.629 208.076 151.719 198.657 167.107C187.156 185.911 191.264 197.593 215.086 202.118C238.909 206.644 236.445 235.381 215.086 242.763C193.727 250.145 200.299 219.774 187.156 219.625C174.013 219.477 160.869 216.488 160.047 204.178C159.591 197.198 150.66 190.669 143.022 186.326C141.045 193.552 140.047 201.01 140.054 208.501C140.054 254.71 177.515 292.171 223.727 292.171C245.152 292.199 265.766 283.979 281.293 269.216C275.407 255.575 276.373 238.443 279.985 228.809Z" fill="#4E5C93"/>
+                        <path d="M160.047 204.178C160.869 216.488 174.012 219.477 187.156 219.625C200.299 219.773 193.727 250.168 215.086 242.774C236.445 235.38 238.909 206.644 215.086 202.13C191.263 197.615 187.156 185.917 198.657 167.118C208.067 151.73 220.658 140.631 213.727 125.433C179.664 129.479 151.886 153.991 143.022 186.326C150.665 190.669 159.581 197.197 160.047 204.178Z" fill="#253368"/>
+                        <path d="M160.047 204.178C160.869 216.488 174.012 219.477 187.156 219.625C200.299 219.773 193.727 250.168 215.086 242.774C236.445 235.38 238.909 206.644 215.086 202.13C191.263 197.615 187.156 185.917 198.657 167.118C208.067 151.73 220.658 140.631 213.727 125.433C179.664 129.479 151.886 153.991 143.022 186.326C150.665 190.669 159.581 197.197 160.047 204.178Z" fill="#E4EBF7"/>
+                        <path d="M307.395 208.502C307.395 175.55 288.347 147.049 260.663 133.405C253.495 140.356 245.912 149.432 244.661 157.625C242.195 173.771 247.124 174.751 251.232 183.3C255.34 191.849 242.195 206.771 252.047 213.683C261.9 220.594 272.598 206.264 279.985 208.502C287.372 210.739 284.912 215.667 279.985 228.81C276.372 238.444 275.407 255.576 281.293 269.226C297.982 253.441 307.425 231.473 307.395 208.502Z" fill="#E4EBF7"/>
+                        <path d="M255.557 270.795C254.481 270.798 253.541 270.066 253.28 269.021C253.02 267.977 253.505 266.889 254.456 266.386C279.802 252.934 300.7 234.875 313.329 215.555C319.408 206.271 323.2 197.212 324.637 188.656C326.093 179.98 325.032 172.186 321.479 165.496C320.873 164.354 321.307 162.937 322.449 162.331C323.591 161.725 325.008 162.16 325.614 163.302C329.66 170.924 330.886 179.715 329.267 189.433C327.721 198.637 323.682 208.287 317.261 218.115C304.207 238.094 282.686 256.704 256.662 270.521C256.322 270.702 255.942 270.796 255.557 270.795Z" fill="#E4EBF7"/>
+                        <path d="M181.497 302.033C191.716 302.033 200 293.749 200 283.53C200 273.312 191.716 265.028 181.497 265.028C171.279 265.028 162.995 273.312 162.995 283.53C162.995 293.749 171.279 302.033 181.497 302.033Z" fill="#E4EBF7"/>
+                        </g>
+                        <g clip-path="url(#clip0)">
+                        <path d="M630.102 810.748L687.273 857.393" stroke="#253368" stroke-width="1.88133" stroke-linecap="round"/>
+                        <path d="M627.19 820.382C635.673 816.584 639.47 806.561 635.671 797.995C631.872 789.429 621.916 785.564 613.433 789.362C604.95 793.16 601.153 803.183 604.952 811.749C608.751 820.315 618.707 824.18 627.19 820.382Z" fill="#CFD1D9" fill-opacity="0.39"/>
+                        <path d="M806.888 777.114C815.371 773.316 819.168 763.293 815.369 754.727C811.57 746.161 801.614 742.296 793.131 746.094C784.649 749.892 780.852 759.915 784.651 768.481C788.449 777.047 798.406 780.912 806.888 777.114Z" fill="#CFD1D9" fill-opacity="0.39"/>
+                        <path d="M710.842 868.233L726.676 729.729" stroke="#253368" stroke-width="1.88133" stroke-linecap="round"/>
+                        <path d="M703.858 852.751C712.341 848.953 722.297 852.818 726.096 861.384C729.895 869.95 726.098 879.972 717.615 883.77C709.132 887.569 699.176 883.704 695.377 875.138C691.578 866.572 695.375 856.549 703.858 852.751Z" fill="#CFD1D9" fill-opacity="0.39"/>
+                        <path d="M730.272 702.557L781.333 746.484" stroke="#253368" stroke-width="1.88133" stroke-linecap="round"/>
+                        <path d="M745.971 708.608C742.632 717.315 732.892 721.676 724.216 718.349C715.54 715.022 711.214 705.266 714.553 696.56C717.892 687.853 727.632 683.492 736.308 686.819C744.984 690.146 749.31 699.902 745.971 708.608Z" fill="#CFD1D9" fill-opacity="0.39"/>
+                        </g>
+                        <defs>
+                        <clipPath id="clip0">
+                        <rect width="283" height="282" fill="white" transform="translate(529 867.236) rotate(-69.0186)"/>
+                        </clipPath>
+                        </defs>
+                        </svg>
+                        <h3 style="color: #4E5C93">No Results</h3>
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sub_functions.js') }}"></script>
+    
+</body>
+
+</html>

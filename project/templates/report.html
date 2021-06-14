@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='report.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='icomoon.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
+
+    <title>Report | iSTREAM</title>
+</head>
+
+<body>
+    
+    <div class="main mb-4">
+        <nav class="navbar navbar-expand-lg app-nav">
+            <div class="container">
+                <h2><b><a class="navbar-brand" href="#"
+                            style="font-family: 'Satisfy', cursive; letter-spacing: 3px;text-decoration: none; color: #fff; font-size: 24pt;">iSTREAM</a></b></h2>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="icon-menu"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent" style="flex-grow: 0;">
+                  <ul class="navbar-nav nav-menu mr-auto mb-2 mb-lg-0">
+                      <li class="nav-item">
+                          <a class="nav-link" href="/">Welcome</a>
+                      </li>
+                  </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="meeting_info text-break">
+            <h6 class="fw-bolder">{{ m_details[0] }}</h6>
+            <p><b>Meeting ID:</b> {{ m_details[1] }}</p>
+            <p><b>Host:</b> {{ m_details[2] }}</p>
+            <p><b>Start Date & Time:</b> {{ m_details[3] }} </p>
+            <p><b>End Date & Time:</b> {{ m_details[4] }} </p>
+            <p><b>Total Participants:</b> {{ m_details[5] }}</p>
+        </div>
+        <div class="text-end mb-2 print_btn">
+            <a href="{{ url_for('print_report_pdf', _mid=m_details[1]) }}" type="submit" class="btn btn-stream">Print</a>
+        </div>
+        <div class="table-responsive-md report_table">
+            <table class="table table-bordered table-sm align-middle">
+                <thead>
+                  <tr class="table-bordered">
+                    <th scope="col">Name</th>
+                    <th scope="col">ID Number</th>
+                    <th scope="col">Joined At</th>
+                    <th scope="col">Left At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in attendance %}
+                    <tr>
+                      <td>{{ item[4] }}</td>
+                      <td>{{ item[0] }}</td>
+                      <td>{{ item[2] }}</td>
+                      <td>{{ item[3] }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+          </div>
+            
+    </div>
+        
+        
+
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sub_functions.js') }}"></script>
+</body>
+
+</html>

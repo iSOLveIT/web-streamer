@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
+    <title>404 | iSTREAM</title>
+
+    <style>
+        @import url("../static/karla.css");
+        
+        html,
+        body {
+            height: 100vh;
+            overflow: hidden;
+            background-color: #000033c9 !important;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Karla', sans-serif !important;
+        }
+        .no-results{
+            width: calc(2 * 10vw);
+            text-align: center;
+        }
+
+        /* mobile screens*/
+        @media (max-width: 1024px){
+            .no-results{
+                width: calc(2 * 20vw);
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 689px){
+            .no-results{
+                width: calc(3 * 20vw);
+                text-align: center;
+            }
+        }
+    </style> 
+</head>
+
+<body>
+
+    <div class="main" style="margin-top: calc(100vh/4.5);">
+       
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center">  
+                    <svg class="no-results" viewBox="0 0 809 831" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M789.825 68.8598H471.872V44.9921C471.872 39.8147 476.371 35.6169 481.921 35.6169H779.776C785.326 35.6169 789.825 39.8147 789.825 44.9921V68.8598Z" fill="#253368"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M778.634 298.206H483.063C476.883 298.206 471.872 294.015 471.872 288.844V65.9192H789.825V288.844C789.825 294.015 784.815 298.206 778.634 298.206Z" fill="#E4EBF7"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M494.93 51.0876C494.93 54.3368 492.124 56.9713 488.662 56.9713C485.201 56.9713 482.396 54.3368 482.396 51.0876C482.396 47.8383 485.201 45.2039 488.662 45.2039C492.124 45.2039 494.93 47.8383 494.93 51.0876Z" fill="#FF7946"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M518.335 51.0876C518.335 54.3368 515.53 56.9713 512.068 56.9713C508.607 56.9713 505.801 54.3368 505.801 51.0876C505.801 47.8383 508.607 45.2039 512.068 45.2039C515.53 45.2039 518.335 47.8383 518.335 51.0876Z" fill="#FAAD14"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M541.741 51.0876C541.741 54.3368 538.935 56.9713 535.474 56.9713C532.013 56.9713 529.207 54.3368 529.207 51.0876C529.207 47.8383 532.013 45.2039 535.474 45.2039C538.935 45.2039 541.741 47.8383 541.741 51.0876Z" fill="#7CB305"/>
+                        <path d="M767.513 77.9551H494.185V279.529H767.513V77.9551Z" fill="white"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M630.5 122.747C601.345 122.747 577.71 147.817 577.71 178.742C577.71 209.668 601.345 234.738 630.5 234.738C659.655 234.738 683.29 209.668 683.29 178.742C683.29 147.817 659.655 122.747 630.5 122.747Z" fill="#A3B5D6"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M647.831 195.712L646.498 197.126C645.393 198.297 643.603 198.297 642.498 197.126L613.169 166.015C612.064 164.844 612.064 162.945 613.169 161.773L614.502 160.359C615.606 159.188 617.397 159.188 618.501 160.359L647.831 191.469C648.935 192.641 648.935 194.54 647.831 195.712Z" fill="#253368"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M613.169 195.712L614.503 197.126C615.607 198.297 617.397 198.297 618.502 197.126L647.831 166.015C648.936 164.844 648.936 162.945 647.831 161.773L646.498 160.359C645.394 159.188 643.603 159.188 642.499 160.359L613.169 191.469C612.065 192.641 612.065 194.54 613.169 195.712Z" fill="#253368"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M155.341 694.255L135.72 674.501L292.72 516.438L312.342 536.194L155.341 694.255Z" fill="#A3B5D6"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M454.733 551.189C357.029 551.189 277.827 471.45 277.827 373.087C277.827 274.724 357.029 194.985 454.733 194.985C552.435 194.985 631.639 274.724 631.639 373.087C631.639 471.45 552.435 551.189 454.733 551.189ZM454.733 135.618C324.462 135.618 218.858 241.936 218.858 373.087C218.858 504.237 324.462 610.556 454.733 610.556C585.003 610.556 690.608 504.237 690.608 373.087C690.608 241.936 585.003 135.618 454.733 135.618Z" fill="#4E5C93"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M329.674 373.086C329.674 303.552 385.665 247.183 454.733 247.183C523.8 247.183 579.791 303.552 579.791 373.086C579.791 442.621 523.8 498.99 454.733 498.99C385.665 498.99 329.674 442.621 329.674 373.086Z" fill="#A3B5D6"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M454.733 442.93C416.417 442.93 385.358 411.661 385.358 373.087C385.358 334.513 416.417 303.243 454.733 303.243C493.048 303.243 524.108 334.513 524.108 373.087C524.108 411.661 493.048 442.93 454.733 442.93Z" fill="white"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M79.2965 770.814L59.6748 751.06C54.2565 745.604 54.2565 736.76 59.6748 731.305L197.53 592.518C202.948 587.062 211.733 587.062 217.152 592.518C217.152 592.518 217.152 592.518 217.152 592.518L236.774 612.273C242.193 617.728 242.193 626.572 236.774 632.027L98.9186 770.814C93.5002 776.27 84.715 776.27 79.2965 770.815C79.2964 770.815 79.2964 770.814 79.2965 770.814Z" fill="#4E5C93"/>
+                        </svg>
+                    <h4 style="color: #CCD7EE">
+                        Page Not Found
+                    </h4>  
+                    <a href="/home" style="font-size: 12pt; color: #4E5C93">Return to Homepage</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+</body>
+
+</html>
