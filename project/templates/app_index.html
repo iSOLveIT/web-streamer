@@ -59,7 +59,7 @@
                 </div>
             </div>
         </nav>
-        <div class="mb-4"></div>
+        <div class="mb-3"></div>
 
         <div class="container page_box">
             <div class="row" style="max-height: 100%; color: #fff;">
@@ -983,7 +983,7 @@
                                         <div class="input-group">
                                             <input type="email" name="user_email" class="form-control" id="inputEmail"
                                                 placeholder="example@domain.com" inputmode="email"
-                                                pattern="^([\w\d\-.]+?)@([a-z]+?).(com|org|net|edu)(.[a-zA-Z]{2})??$"
+                                                pattern="^[\w\-.]+?@(gmail|hotmail|yahoo|outlook).(com|org)$|^[\w\-.]+?@upsamail.edu.gh$"
                                                 aria-describedby="inputValidate" autocomplete="off" required>
                                             <span class="input-group-text border-start-0" id="inputValidate"
                                                 style="background-color: transparent; margin-left: 0px; padding-left: 5px; padding-right: 24px;"></span>
@@ -1017,6 +1017,7 @@
             </button>
             <div class="container">
                 <div class="row">
+		    {% include 'includes/_message.html' %}
                     <div class="mb-2 text-copied"></div>
                     <div class="col-9">
                         <textarea id="meeting_text" rows="10">{{ meeting_info }}</textarea>

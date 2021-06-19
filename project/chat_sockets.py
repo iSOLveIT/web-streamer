@@ -76,9 +76,13 @@ def on_close(data):
     user_id = data['user_id']
 
     if user_id == "Host":
+        #session.pop('OTP', None)
+        #emit('class_end', to=room_id, include_self=False, namespace='/meeting')  # Handles redirecting students
+        disconnect_students(room_id=room_id)  # disconnect all users
+        meeting_collection = mongo.get_collection("meetings")
+        meeting_collection.find_one_and_update({"meeting_id": room_id}, {"$set": {"status": "expired"}})
         session.pop('OTP', None)
         emit('class_end', to=room_id, include_self=False, namespace='/meeting')  # Handles redirecting students
-        disconnect_students(room_id=room_id)  # disconnect all users
         leave_room(room_id)
         close_room(room_id)
 
@@ -97,7 +101,7 @@ def test_disconnect():
             f"attendance_records.{request.sid}.3": left_at
         }},
         {"meeting_id": 1, f"attendance_records.{request.sid}": 1,
-         "status": 1, "meeting_start_dateTime": 1, "stream_id": 1,
+         "status": 1, "meeting_start_dateTime": 1,
          "meeting_end_dateTime": 1},
         return_document=ReturnDocument.AFTER
     )
@@ -113,21 +117,20 @@ def test_disconnect():
 
         # If meeting time is not up but host exits meeting due to network failures or computer issues
         # Disconnect everyone and allow them to rejoin again
-        if start_datetime <= dt.now(tz=gh) < end_datetime:
+        if start_datetime <= dt.now(tz=gh) < end_datetime and meeting_data["status"] != "expired":
             duration_remaining = (end_datetime - dt.now(tz=gh)).seconds
             meeting_collection.find_one_and_update({"meeting_id": room_id},
                                                    {"$set": {"duration_left": duration_remaining,
                                                              "status": "pending", "is_verified": False}})
-            emit('class_end', to=room_id, include_self=False, namespace='/meeting')  # Handles redirecting students
             disconnect_students(room_id=room_id)  # disconnect all users
+            emit('class_end', to=room_id, include_self=False, namespace='/meeting')  # Handles redirecting students
             close_room(room_id)
             return redirect(url_for('all_verification', loader="host_verify"))
 
         meeting_collection.find_one_and_update({"meeting_id": room_id},
-                                               {"$set": {"status": "expired", "duration_left": 0}})
-
-        emit('class_end', to=room_id, include_self=False, namespace='/meeting')  # Handles redirecting students
+                                               {"$set": {"status": "expired", "duration_left": 0, "is_verified": True}})
         disconnect_students(room_id=room_id)  # disconnect all users
+        emit('class_end', to=room_id, include_self=False, namespace='/meeting')  # Handles redirecting students
         close_room(room_id)
         flash(message="Class has ended.", category="notice")
         return redirect(url_for('index'))

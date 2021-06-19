@@ -19,7 +19,7 @@ application = Flask(__name__)
 
 # Session Configuration
 application.config['SESSION_COOKIE_NAME'] = "istream"
-application.config['SESSION_COOKIE_PATH '] = "/meeting/"
+application.config['SESSION_COOKIE_PATH '] = "/"
 application.config['SESSION_COOKIE_SECURE'] = True
 application.config['SESSION_COOKIE_HTTPONLY'] = True
 application.config['SESSION_COOKIE_SAMESITE'] = "Lax"

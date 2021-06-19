@@ -56,7 +56,7 @@ def index():
             m_duration = request.form.get("mDuration")
 
             # Sanitize input received
-            check_email = re.search(r"^([\w\d\-.]+?)@([a-z]+?).(com|org|net|edu)(.[a-zA-Z]{2})??$", m_email)
+            check_email = re.search(r"^[\w\-.]+?@(gmail|hotmail|yahoo|outlook).(com|org)$|^[\w\-.]+?@upsamail.edu.gh$", m_email)
             inputs_box = [check_email, re.search(r"^(\d{4})-(\d{2})-(\d{2})$", m_date),
                           m_hour, m_minute, re.search(r"(am|pm)", time_fmt), re.search(r"^[1-3]$", m_duration)]
 
@@ -257,9 +257,9 @@ def contact():
         u_name = request.form.get("c_name")
         u_email = request.form.get("c_email")
         u_subject = request.form.get("c_subj")
-        u_msg = request.form.get("c_msg")
+        u_msg = request.form.get("c_msg") 
 
-        result = re.search(r"^([\w\d\-.]+?)@([a-z]+?).(com|org|net|edu)(.[a-zA-Z]{2})??$", u_email)
+        result = re.search(r"^[\w\-.]+?@(gmail|hotmail|yahoo|outlook).(com|org)$|^[\w\-.]+?@upsamail.edu.gh$", u_email)
         if None in [u_name, u_subject, u_msg, result]:
             flash(message="Message not sent. Please check your input and resubmit", category="danger")
             return redirect(url_for("contact"))
